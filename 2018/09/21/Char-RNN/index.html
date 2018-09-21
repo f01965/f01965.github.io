@@ -4,7 +4,7 @@
 	
 
 <head>
-	<title>Archives: 2018</title>
+	<title>Char-RNN</title>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="apple-mobile-web-app-title" content="Amaze UI" />
@@ -44,10 +44,8 @@
 	
 	
 		
-			<p class="page-name"></p>
+			<p class="page-name">Char-RNN</p>
 		
-		
-			<p class="page-name">文章归档</p>
 		
 	
 </header>
@@ -88,84 +86,100 @@
 	<!-- content srart -->
 <div class="am-g am-g-fixed blog-fixed blog-content">
 	<div class="am-u-md-8 am-u-sm-12">
-		<div class="archive">
 
-			<div class="blog-text-center">
+		<article class="am-article blog-article-p">
+			<div class="am-article-hd">
 				
-					<i class="fa fa-book">总计3篇文章</i>
-				
-			</div>  
 
-			
 
-							
-				
-				
-				
+				<h1 class="am-article-title blog-text-center">
 					
-
 					
-					<!--<a href="/archives/2018" class="archive-year">2018</a>-->
-				
-								
-				
-					  
-					<div class="archive-year">
-						<a href="/archives/2018/09">
-							2018-09
-						</a>
-					</div>				
-				  
-				
-				<div class="archive-item">
-					<div class="archive-post-title">									
-						<a href="/2018/09/21/Char-RNN/" itemprop="url">Char-RNN</a>
-					</div>
-					<div class="archive-post-time">
-						<a href="/2018/09/21/Char-RNN/" itemprop="url">09-21</a>
-					</div>
-				</div>		        							
-							
-				
-				
-				
-								
-				  
-				
-				<div class="archive-item">
-					<div class="archive-post-title">									
-						<a href="/2018/09/09/9-9-Autumn/" itemprop="url">9/9 Autumn</a>
-					</div>
-					<div class="archive-post-time">
-						<a href="/2018/09/09/9-9-Autumn/" itemprop="url">09-09</a>
-					</div>
-				</div>		        							
-							
-				
-				
-				
-								
-				  
-				
-				<div class="archive-item">
-					<div class="archive-post-title">									
-						<a href="/2018/09/06/hello-world/" itemprop="url">Hello World</a>
-					</div>
-					<div class="archive-post-time">
-						<a href="/2018/09/06/hello-world/" itemprop="url">09-06</a>
-					</div>
-				</div>		        							
-			
-				
-			
+	
+		<a href="/2018/09/21/Char-RNN/" itemprop="url">		
+			Char-RNN		
+		</a>
+	
 
+
+
+				</h1>
+
+				<p class="am-article-meta blog-text-center">
+					<span>
+						<i class="fa fa-clock-o"></i> 
+						<a href="/2018/09/21/Char-RNN/" itemprop="url">
+	<time datetime="2018-09-21T12:54:59.000Z" itemprop="datePublished">
+  		2018-09-21
+  </time>
+</a>    
+&nbsp
+					</span>
+					<span>						
+						
+					</span>	
+				</p>
+			</div>	
+
+			<div class="am-article-bd">
+				<div class="content">
+					<p>Char RNN 搭建和使用方法</p>
+<h1 id="一、Char-RNN"><a href="#一、Char-RNN" class="headerlink" title="一、Char RNN"></a>一、Char RNN</h1><pre><code>项目链接： https://github.com/karpathy/char-rnn
+</code></pre><h1 id="二、搭建环境"><a href="#二、搭建环境" class="headerlink" title="二、搭建环境"></a>二、搭建环境</h1><ul>
+<li>ubuntu-16.04.3-desktop-amd64<br>  下载地址：<a href="http://releases.ubuntu.com/?_ga=2.207074835.1052515424.1521179633-1053557833.1513924047" target="_blank" rel="noopener">http://releases.ubuntu.com/?_ga=2.207074835.1052515424.1521179633-1053557833.1513924047</a></li>
+<li>在已安装好的ubuntu环境下，安装相关模块<ul>
+<li>安装git ，命令：  sudo apt install git</li>
+<li>安装 curl，命令：sudo apt install curl</li>
+<li>安装 cmake，命令：sudo apt install cmake</li>
+<li>安装luarocks，命令：sudo apt install luarocks</li>
+<li>依此执行以下命令：<ul>
+<li>curl -s <a href="https://raw.githubusercontent.com/torch/ezinstall/master/install-deps" target="_blank" rel="noopener">https://raw.githubusercontent.com/torch/ezinstall/master/install-deps</a> | bash</li>
+<li>git clone <a href="https://github.com/torch/distro.git" target="_blank" rel="noopener">https://github.com/torch/distro.git</a> ~/torch –recursive</li>
+<li>cd ~/torch</li>
+<li>./install.sh         <strong>这里执行后，需要输入” yes”</strong></li>
+<li>source ~/.bashrc</li>
+</ul>
+</li>
+<li>然后执行以下命令：<ul>
+<li>luarocks install nngraph</li>
+<li>luarocks install optim</li>
+<li>luarocks install nn</li>
+<li>Reboot</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="三、基础使用方法"><a href="#三、基础使用方法" class="headerlink" title="三、基础使用方法"></a>三、基础使用方法</h1><p>将从github 上下载的Char RNN项目，解压放到部署 的Ubuntu的环境中，打开文件夹。<br><img src="/images/Ch-RNN/1.png" alt="1"></p>
+<p>起一个终端，执行命令：th train.lua –gpuid -1<br>用于测试环境是否搭建好<br><img src="/images/Ch-RNN/2.png" alt="2"></p>
+<p>若搭建完成，如下图，将会开始学习：<br><img src="/images/Ch-RNN/3.png" alt="3"></p>
+<p>学习的样本，默认从  data/ tinyshakespeare/   下取得名为 input.txt的文件，执行时，程序会自动生成另外2个文件  ：data.t7 ，vocab.t7 。<br><img src="/images/Ch-RNN/4.png" alt="4"></p>
+<h1 id="四、用户自定义使用方法："><a href="#四、用户自定义使用方法：" class="headerlink" title="四、用户自定义使用方法："></a>四、用户自定义使用方法：</h1><p>输入命令： th  train.lua –help  可以查看相关参数。<br><img src="/images/Ch-RNN/5.png" alt="5"></p>
+
+				</div>
+			</div>
+
+		</article>
+
+		<ul class="am-pagination">
+    
+	
+		<li class="am-pagination-next">
+		<a class="pull-right" href="/2018/09/09/9-9-Autumn/" title="9/9 Autumn">
+			下一篇&raquo;
+		</a>
+		</li>
+	 
+ </ul>
         
-  
-  
 
-		</div>
-	</div>
+			
+
+
+	</div> 
 </div>
+
+
 
 	</div>
 	<footer>
@@ -223,6 +237,11 @@
 	}
 </style>
 
+
+	<script src="/js/motto.js"></script>
+	<script>
+		$(".motto").html(getMingYanContent());
+	</script>	
 
 
 
