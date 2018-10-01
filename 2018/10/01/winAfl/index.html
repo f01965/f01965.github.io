@@ -1,0 +1,120 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="“一个二进制同学的博客。”"><title>winAfl | f01965</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=0.0.0"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/normalize/8.0.0/normalize.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/pure-min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/grids-responsive-min.css"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = 'https://hm.baidu.com/hm.js?' + 'true';
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+  })();
+  </script></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">winAfl</h1><a id="logo" href="/.">f01965</a><p class="description">少年，向前走~~ 别回头。</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">winAfl</h1><div class="post-meta">Oct 1, 2018<span> | </span><span class="category"><a href="/categories/技术分享/">技术分享</a></span><script src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js" async></script><span id="busuanzi_container_page_pv"> | <span id="busuanzi_value_page_pv"></span><span> 阅读</span></span></div><a class="disqus-comment-count" href="/2018/10/01/winAfl/#vcomment"><span class="valine-comment-count" data-xid="/2018/10/01/winAfl/"></span><span> 条评论</span></a><div class="post-content"><p>WinAFL</p>
+<ol>
+<li>背景<br>从目标二进制文件中查找新的执行路径。</li>
+<li>WinAFL 的路径<br>使用DynamoRIO 来动态插桩，用来测量和提取目标覆盖率。</li>
+<li>搭建，使用<br><a href="http://www.4hou.com/technology/2800.html" target="_blank" rel="noopener">http://www.4hou.com/technology/2800.html</a><br>status screen</li>
+</ol>
+<ul>
+<li><ol>
+<li>处理时间 Process timing<br><img src="1.png" alt=""></li>
+</ol>
+<ul>
+<li>Run time：运行时间</li>
+<li>Last new path：最近一次的新的路径</li>
+<li>Last uniq crash：最近一次的崩溃样本出现时间</li>
+<li>Last uniq hang：最近一次出现样本被挂起的时间</li>
+</ul>
+</li>
+<li><ol start="2">
+<li>总体结果  Overall results<br><img src="2.png" alt=""></li>
+</ol>
+<ul>
+<li>Cycles done：循环的次数</li>
+<li>Total path：测试的总路径</li>
+<li>Uniq crashes：崩溃数</li>
+<li>Uniq hangs：总的不同的有趣样本的数目</li>
+</ul>
+</li>
+<li><ol start="3">
+<li>循环进度Cycle progress<br><img src="3.png" alt=""></li>
+</ol>
+<ul>
+<li>Now processing：当前的进度</li>
+<li>Path timed out：因超时而放弃的部分</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><ol start="4">
+<li>模块覆盖率 Map coverage<br><img src="4.png" alt=""></li>
+</ol>
+<ul>
+<li>Map desity：30.29%表示已击中多少部分，58.81%表示总体的覆盖率</li>
+<li>Count coverage：计算覆盖率</li>
+</ul>
+</li>
+<li><ol start="5">
+<li>测试进展 Stage progress<br><img src="5.png" alt=""></li>
+</ol>
+<ul>
+<li>Now trying：当前测试到哪一步</li>
+<li>Stage execs：当前exec执行的进度</li>
+<li>Total execs：执行的文件数</li>
+<li><p>Exec speed：执行的速度</p>
+</li>
+<li><p>Calibration：    预模糊阶段，检查执行路径以检测异常。</p>
+</li>
+<li>trim L/S：      另一个预模糊阶段，把样本改为最短，已相同路径执行。</li>
+<li>bitflip L/S：    位翻转测试。</li>
+<li>arith L/8：    算术测试。</li>
+<li>interest L/8：    填入确定的值进行测试。</li>
+<li>Extras：    通过字典进行测试。</li>
+<li>Havoc：    带固定长度，且堆叠随机调整的测试。</li>
+<li>Splice：    …</li>
+<li>Sync：    …</li>
+</ul>
+</li>
+<li><ol start="6">
+<li>测试结果 Findings in depth<br><img src="6.png" alt=""></li>
+</ol>
+<ul>
+<li>favored path：特别的路径</li>
+<li>new edges on：新的边缘覆盖数量</li>
+<li>total crashes：崩溃数</li>
+<li>total tmouts：总的特别的样例</li>
+</ul>
+</li>
+<li><ol start="7">
+<li>测试的算法<br><img src="7.png" alt=""></li>
+</ol>
+</li>
+</ul>
+<ul>
+<li><ol start="8">
+<li>测试路径 Path geometry<br><img src="8.png" alt=""></li>
+</ol>
+<ul>
+<li>Levels：测试的路径深度</li>
+<li>Pending：有待测试的数量</li>
+<li>Pend fav：偏好的样例数目</li>
+<li>Own finds：在此测试中找到的新路径的数量</li>
+<li>Imported：相同输入有时在测试二进制文件中产生变量行为的程度</li>
+<li>Stability：程序对于相同的输入数据总是表现相同，这里就是100％。但是当这个数子很低时候，说明错在一些错误</li>
+</ul>
+</li>
+</ul>
+</div><iframe src="/donate/?AliPayQR=null&amp;WeChatQR=/img/weChat.jpg&amp;GitHub=null&amp;BTCQR=null&amp;BTCKEY=null&amp;PayPal=null" style="overflow-x:hidden; overflow-y:hidden; border:0xp none #fff; min-height:240px; width:100%;" frameborder="0" scrolling="no"></iframe><div class="tags"><a href="/tags/fuzz/">fuzz</a></div><div class="post-nav"><a class="next" href="/2018/09/30/GC-algorithm/">GC algorithm</a></div><div id="vcomment"></div><script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'o3qEIvAEzJfA0jPzjvyVeUwo-gzGzoHsz',
+  appKey:'VBV3VN2vtqwbGqHGFeNL86iw',
+  placeholder:'thanks for you read',
+  avatar:'mm',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.baidu.com/baidu" method="get" accept-charset="utf-8" target="_blank"><input type="search" name="word" maxlength="20" placeholder="Search"/><input type="hidden" name="si" value="https://f01965.github.io"/><input name="tn" type="hidden" value="bds"/><input name="cl" type="hidden" value="3"/><input name="ct" type="hidden" value="2097152"/><input name="s" type="hidden" value="on"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div><ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/CVE-2018/">CVE / 2018</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/技术分享/">技术分享</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/日志/">日志</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"><a href="/tags/GC/" style="font-size: 15px;">GC</a> <a href="/tags/机器学习框架/" style="font-size: 15px;">机器学习框架</a> <a href="/tags/随笔/" style="font-size: 15px;">随笔</a> <a href="/tags/Mircosoft/" style="font-size: 15px;">Mircosoft</a> <a href="/tags/fuzz/" style="font-size: 15px;">fuzz</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2018/10/01/winAfl/">winAfl</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/09/30/GC-algorithm/">GC algorithm</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/09/29/What-have-I-done-recently/">What have I done recently?</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/09/27/ZDI-Jet-OOB/">ZDI-Jet_OOB</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/09/26/长路漫漫/">长路漫漫</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/09/21/Char-RNN/">Char-RNN</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/08/29/language/">language</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/08/26/hello-my-friend/">Hello , my friend。Do you like to play ♂ games?</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="https://yan-1-20.github.io/about/" title="Asprose" target="_blank">Asprose</a><ul></ul><a href="https://www.lucifaer.com/" title="Lucifaer" target="_blank">Lucifaer</a><ul></ul><a href="drac0nids.top" title="Drac0nids" target="_blank">Drac0nids</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer"> Dad ， I will always love you.</div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=0.0.0" async></script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.0" async></script><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.css"><script type="text/javascript" color="255,0,0" opacity="0.7" zIndex="-1" count="100" src="//cdn.bootcss.com/canvas-nest.js/1.0.1/canvas-nest.min.js"></script><script type="text/javascript" src="/js/codeblock-resizer.js?v=0.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=0.0.0"></script></div></body></html>
