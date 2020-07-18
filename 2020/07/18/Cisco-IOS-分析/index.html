@@ -1,0 +1,109 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="“一个不像二进制同学的博客。”"><title>Cisco-IOS 分析 | f01965</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=0.0.0"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/normalize/8.0.0/normalize.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/pure-min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/grids-responsive-min.css"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = 'https://hm.baidu.com/hm.js?' + 'true';
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+  })();
+  </script></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">Cisco-IOS 分析</h1><a id="logo" href="/.">f01965</a><p class="description">初闻不知曲中意，再听已是曲中人。</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">Cisco-IOS 分析</h1><div class="post-meta">Jul 18, 2020<script src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js" async></script><span id="busuanzi_container_page_pv"> | <span id="busuanzi_value_page_pv"></span><span> 阅读</span></span></div><a class="disqus-comment-count" href="/2020/07/18/Cisco-IOS-分析/#vcomment"><span class="valine-comment-count" data-xid="/2020/07/18/Cisco-IOS-分析/"></span><span> 条评论</span></a><div class="post-content"><h2 id="Cisco-IOS"><a href="#Cisco-IOS" class="headerlink" title="Cisco IOS"></a>Cisco IOS</h2><h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>思科的IOS bin实际上是一个非常大的ELF文件。</p>
+<p> <img src="1.png" alt=""></p>
+<p>高度集成，且非模块化，没有so文件这种。虚拟内存架构未完全实现，具有平面内存模型。数据存储使用栈和堆，但是包括栈在内的所有内容都存储在堆中。</p>
+<h3 id="解压缩IOS固件"><a href="#解压缩IOS固件" class="headerlink" title="解压缩IOS固件"></a>解压缩IOS固件</h3><p>首先，iOS固件有使用修改后的pkzip格式进行压缩的，也有未压缩的，未压缩当然不需要解。压缩过的IOS，引导加载程序将会在运行时将固件解压缩。<br>实际上解压缩出来的文件中，有一个bin文件。这里用Cisco 7200举例，用binwalk识别一下，如下图。可以看到有个Zip archive Data 部分，名为C7200-AD.bin ，它也是一个ELF文件。这个ELF才是主体，里面高度集成化。但是可以用IDA这类工具打开分析。</p>
+<p><img src="2.png" alt=""></p>
+<p>这里可以用Binwalk -Me把这个估计解压缩出来。<br>ELF –&gt;e_machine<br>未压缩的IOS固件是标准的ELF镜像文件。但是，稍稍改动了ELF头部。以防止我们对固件进行逆向。头部结构简略的看如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">typedef struct &#123; </span><br><span class="line">unsigned char e_ident[EI_NIDENT];  /* Magic number and other info */</span><br><span class="line">Elf32_Half e_type;                 /* Object file type */ </span><br><span class="line">Elf32_Half e_machine;             /* Architecture */</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>它改动的部分是e_machine 值，下面，我使用2个Cisco路由进行举例说明，Cisco 2600（未压缩），Cisco 7200（有压缩）。</p>
+<h3 id="Cisco-2600"><a href="#Cisco-2600" class="headerlink" title="Cisco 2600"></a>Cisco 2600</h3><p>固件为unzip-c2600-i-mz.121-3.T.bin，是基于PowerPC架构。用file 命令，和Binwalk工具识别一下，如下图。</p>
+<p><img src="3.png" alt=""></p>
+<p>从图上可以看到，这是一个未压缩的IOS，它就是一个ELF文件。那么，这个ELF的 e_machine字段原本是0x002B，对应的架构是SPARC Version9，如下图。</p>
+<p>但是它是PocerPC架构，所以要修改为0x0014，如下图。</p>
+<p>然后用IDA打开，就能被识别到是PowerPC架构。</p>
+<p>IDA对arm，mips，powerpc这些架构的反汇编不是太好。这里换另一个工具Ghidra。如下图。能反汇编函数，效果比IDA好。</p>
+<p>如果不对e_machine字段进行修改， Ghidra是无法识别出里面的函数的。<br>Cisco 7200<br>固件为c7200-advipservicesk9-mz.150-1.M.bin，这个固件是基于misp架构的。</p>
+<p>从图上可以看到这个elf是压缩过的，中间还有个名为C7200-AD.bin的文件。用Binwalk把它解压出来。对C7200-AD.bin 进行识别，可以看到似乎于前面的Cisco 2600固件类似。</p>
+<p>来看看这个C7200-AD ELF 的 e_machine 字段值，为0x0019，如下图。0x0019对应的意思是“Reserved for future use”,保留字段。</p>
+<p>如果直接把这个C7200-AD 放入Ghidra中，如下图。</p>
+<p>在Language这一行，ghidra识别不了这个ELF文件是什么架构的。所以，就无法反编译了，实际上e_machine这个字段就是标明了该文件的架构，ghidra就是根据这个字段去判断的。所以，我们对这个e_machine进行修改，改为misp的值，即0x0008，如下图。</p>
+<p>修改后，放入ghidra，这下就能看到识别为MIPS，如下图。</p>
+<p>这个时候就能反汇编出里面的函数。</p>
+<p>根据上面2个例子，首先要搞清楚这个IOS bin是什么体系结构。因为e_machine字段被修改了，需要手动调整。</p>
+<p>DynaMips 模拟与调试<br>前面说了IOS bin文件压缩和未压缩的如何分析。它不像我们之前的路由器固件，可以解包解出里面的文件系统，有可能是squashfs，或者Cramfs等。但IOS bin 就一个整体的，稍微改动了的ELF文件。<br>我们在进行仿真模拟的时候，根据EVE-NG官方的说明，对于有压缩过的IOS，使用下面这条命令，就能直接把 bin 文件做成 image文件，然后就能使用。这里，我用前面的7200系列举例，命令如下：<br>unzip -p c7200-advipservicesk9-mz.150-1.M.bin &gt; c7200-advipservicesk9-mz.150-1.M.image<br>这条命令实际就是用unzip解压 c7200 bin，解压输出到 c7200 image里。它得到的 Image 文件与我们用binwalk 解出来的 C7200-AD.bin 一模一样。<br>这里用010Editor进行文件对比一下就能看出来，如下图。</p>
+<p>第一个文件是C7200-AD.bin ，是用binwalk解出来的。<br>第二个文件是c7200-advipservicesk9-mz.150-1.M.image，用unzip命令得到的。<br>它们只有一个字段不一样，那就是e_machine。那是因为C7200-AD的e_machine 我在前面修改过，改为了0x0008。如果不修改也是0x0019，是完全一样的。<br>那么，DynaMips所运行的image文件就是这样来的。<br>另外，如果IOS文件没有压缩，就像前面说的cisco 2600，它就直接作为dynamips的image使用。</p>
+<p>Dynamips-gdb-mod<br>要对IOS image进行调试，使用工具dynamips-gdb-mod工具。下面进行说明。<br>安装依赖：apt-get install libpcap-dev uml-utilities libelf-dev libelf1<br>下载dynamips-gdb-mod</p>
+<h1 id="git-clone-https-github-com-Groundworkstech-dynamips-gdb-mod"><a href="#git-clone-https-github-com-Groundworkstech-dynamips-gdb-mod" class="headerlink" title="git clone https://github.com/Groundworkstech/dynamips-gdb-mod"></a>git clone <a href="https://github.com/Groundworkstech/dynamips-gdb-mod" target="_blank" rel="noopener">https://github.com/Groundworkstech/dynamips-gdb-mod</a></h1><h1 id="cd-dynamips-gdb-mod-src"><a href="#cd-dynamips-gdb-mod-src" class="headerlink" title="cd dynamips-gdb-mod/src"></a>cd dynamips-gdb-mod/src</h1><h1 id="DYNAMIPS-ARCH-amd64-make"><a href="#DYNAMIPS-ARCH-amd64-make" class="headerlink" title="DYNAMIPS_ARCH=amd64 make"></a>DYNAMIPS_ARCH=amd64 make</h1><p>若任然出现下图类似错误</p>
+<p>编辑makefile，将第65行<br>   LIBS=-L/usr/lib -L. -ldl /usr/lib/libelf.a $(PTHREAD_LIBS)<br>更改为<br>   LIBS=-L/usr/lib -L. -ldl /usr/lib/libelf.a $(PTHREAD_LIBS) -lz<br>如下图。</p>
+<p>下面，使用生成好的 dynamips 来加载要调试的IOS Image，命令如下：<br>$ tunctl -t tap1<br>$ ifconfig tap1 up<br>$ ifconfig tap1 192.168.153.1/24 up<br>$ ./dynamips -Z 12345 -j -P 7200 -s 0:0:tap:tap1 -s 0:1:linux_eth:eth0 C7200-AD.BIN<br>其中-Z是待连接的端口，-j：禁用JIT编译器，-P是模拟的硬件平台，-s的内容是指将Cisco设备的f0/0接口映射到linux的eth0，这之后C7200-AD.BIN是解包后的镜像。还有其他参数，在文章最后给出说明。<br>下图就是模拟成功，等待gdb client 连接。</p>
+<p>在环境中安装好gdb，进入gdb，使用命令连接。注意端口是12345。<br>Target remote 192.168.153.1:12345</p>
+<p>连接上之后输入命令 C，继续执行。那么，另一半的路由器就会继续执行。如下图。</p>
+<p>接着需要进行一些路由器的初始化配置。经过一系列的配置之后，进到路由器控制端。如下图。</p>
+<p>Gdb Client 这边已经可以进行调试。</p>
+<p>到此，gdb调试IOS image文件完成。</p>
+<p>./dynamips –h参数说明<br>可用选项：<br>-H [&lt;ip_address&gt;：] &lt;tcp_port&gt;：在虚拟机监控程序模式下运行<br>-P <platform>：要仿真的平台（7200、3600、2691、3725、3745、2600或1700）（默认值：7200）<br>  -Z &lt;tcp_port&gt;：启动GDB服务器<br>  -l &lt;log_file&gt;：设置日志文件（默认为dynamips_log.txt）<br>  -j：禁用JIT编译器，非常慢<br>  –exec-area &lt;大小&gt;：设置exec区域大小（默认值：64 Mb）<br>  –idle-pc <pc>：设置空闲的PC（默认值：禁用）<br>  –timer-itv <val>：计时器IRQ间隔检查（默认值：1000）</val></pc></platform></p>
+<p>  -i &lt;实例&gt;：设置实例ID<br>  -r &lt;ram_size&gt;：设置虚拟RAM大小（默认值：256 Mb）<br>  -o &lt;rom_size&gt;：设置虚拟ROM大小（默认值：4 Mb）<br>  -n &lt;nvram_size&gt;：设置NVRAM大小（默认值：128 Kb）<br>  -c &lt;conf_reg&gt;：设置配置寄存器（默认值：0x2102）<br>  -m &lt;mac_addr&gt;：设置机箱的MAC地址（默认值：自动生成）<br>  -C &lt;cfg_file&gt;：将IOS配置文件导入NVRAM<br>  -X：不要使用文件来模拟RAM（更快）<br>  -G &lt;ghost_file&gt;：使用幻影文件模拟RAM<br>  -g &lt;ghost_file&gt;：生成幻影RAM文件<br>  –sparse-mem：使用稀疏内存<br>  -R &lt;rom_file&gt;：加载备用ROM（默认值：嵌入式）<br>  -k &lt;clock_div&gt;：设置时钟除数（默认值：4）</p>
+<p>  -T &lt;端口&gt;：控制台位于TCP &lt;端口&gt;上<br>  -U &lt;si_desc&gt;：在串行接口&lt;si_desc&gt;上控制台（默认在终端上）</p>
+<p>  -A &lt;端口&gt;：AUX在TCP &lt;端口&gt;上<br>  -B &lt;si_desc&gt;：AUX在串行接口&lt;si_desc&gt;上（默认为无AUX端口）</p>
+<p>  –disk0 &lt;大小&gt;：设置PCMCIA ATA磁盘0：大小（默认值：64 Mb）<br>  –disk1 &lt;大小&gt;：设置PCMCIA ATA磁盘1：大小（默认值：0 Mb）</p>
+<p>  -t &lt;npe_type&gt;：选择NPE类型（默认值：“ npe-200”）<br>  -M &lt;中板&gt;：选择中板（“ std”或“ vxr”）<br>  -p &lt;pa_desc&gt;：定义端口适配器<br>  -s &lt;pa_nio&gt;：将网络IO接口绑定到端口适配器</p>
+<p>  -a &lt;cfg_file&gt;：虚拟ATM交换机配置文件<br>  -f &lt;cfg_file&gt;：虚拟帧中继开关配置文件<br>  -E &lt;cfg_file&gt;：虚拟以太网交换机配置文件<br>  -b &lt;cfg_file&gt;：虚拟网桥配置文件<br>  -e：显示主机的网络设备列表</p>
+<p>&lt;si_desc&gt;格式：<br>   “设备{：波特率{：数据位{：奇偶校验{：停止位{：hwflow}}}}}}}</p>
+<p>&lt;pa_desc&gt;格式：<br>   “ slot：sub_slot：pa_driver”</p>
+<p>&lt;pa_nio&gt;格式：<br>   “ slot：port：netio_type {：netio_parameters}”</p>
+<p>可用的C7200 NPE驱动程序：</p>
+<ul>
+<li>NPE-100</li>
+<li>NPE-150</li>
+<li>NPE-175</li>
+<li>NPE-200</li>
+<li>NPE-225</li>
+<li>NPE-300</li>
+<li>NPE-400</li>
+<li>npe-g1（不工作）</li>
+<li>npe-g2（不工作）</li>
+</ul>
+<p>可用的C7200端口适配器（PA）驱动程序：</p>
+<ul>
+<li>C7200-IO-FE</li>
+<li>C7200-IO-2FE（不工作）</li>
+<li>C7200-IO-GE-E（不工作）</li>
+<li>PA-FE-TX</li>
+<li>PA-2FE-TX（不工作）</li>
+<li>PA-GE（不工作）</li>
+<li>PA-4E</li>
+<li>PA-8E</li>
+<li>PA-4T +</li>
+<li>PA-8T</li>
+<li>PA-A1</li>
+<li>PA-POS-OC3</li>
+<li>PA-4B（不工作）</li>
+<li>PA-MC-8TE1（不工作）</li>
+</ul>
+<p>可用的NETIO类型：</p>
+<ul>
+<li>unix：UNIX本地套接字</li>
+<li>vde：虚拟分布式以太网/ UML交换机<br>*点击：Linux / FreeBSD TAP设备</li>
+<li>udp：UDP套接字</li>
+<li>tcp_cli：TCP客户端</li>
+<li>tcp_ser：TCP服务器</li>
+<li>linux_eth：Linux以太网设备</li>
+<li>gen_eth：通用以太网设备（PCAP）</li>
+<li>fifo：FIFO（内部管理程序）</li>
+<li>null：空设备</li>
+</ul>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p>[1]. <a href="https://www.sco.com/developers/gabi/2000-07-17/ch4.eheader.html" target="_blank" rel="noopener">https://www.sco.com/developers/gabi/2000-07-17/ch4.eheader.html</a><br>[2]. <a href="https://www.eve-ng.net/index.php/documentation/howtos/howto-add-cisco-dynamips-images-cisco-ios/" target="_blank" rel="noopener">https://www.eve-ng.net/index.php/documentation/howtos/howto-add-cisco-dynamips-images-cisco-ios/</a><br>[3]. <a href="https://www.blackhat.com/presentations/bh-usa-08/Chawdhary_Uppal/BH_US_08_Chawdhary_Uppal_Cisco_IOS_Shellcodes.pdf" target="_blank" rel="noopener">https://www.blackhat.com/presentations/bh-usa-08/Chawdhary_Uppal/BH_US_08_Chawdhary_Uppal_Cisco_IOS_Shellcodes.pdf</a><br>[4]. <a href="https://xz.aliyun.com/t/5697" target="_blank" rel="noopener">https://xz.aliyun.com/t/5697</a><br>[5]. <a href="http://drops.xmd5.com/static/drops/papers-10045.html" target="_blank" rel="noopener">http://drops.xmd5.com/static/drops/papers-10045.html</a><br>[6]. <a href="https://github.com/Groundworkstech/dynamips-gdb-mod" target="_blank" rel="noopener">https://github.com/Groundworkstech/dynamips-gdb-mod</a></p>
+</div><iframe src="/donate/?AliPayQR=null&amp;WeChatQR=/img/mePic.jpg&amp;GitHub=null&amp;BTCQR=null&amp;BTCKEY=null&amp;PayPal=null" style="overflow-x:hidden; overflow-y:hidden; border:0xp none #fff; min-height:240px; width:100%;" frameborder="0" scrolling="no"></iframe><div class="tags"><a href="/tags/技术分享/">技术分享</a></div><div class="post-nav"><a class="next" href="/2020/06/28/Chrome-沙盒逃逸/">Chrome 沙盒逃逸</a></div><div id="vcomment"></div><script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'o3qEIvAEzJfA0jPzjvyVeUwo-gzGzoHsz',
+  appKey:'VBV3VN2vtqwbGqHGFeNL86iw',
+  placeholder:'thanks for you read',
+  avatar:'mm',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.baidu.com/baidu" method="get" accept-charset="utf-8" target="_blank"><input type="search" name="word" maxlength="20" placeholder="Search"/><input type="hidden" name="si" value="https://f01965.github.io"/><input name="tn" type="hidden" value="bds"/><input name="cl" type="hidden" value="3"/><input name="ct" type="hidden" value="2097152"/><input name="s" type="hidden" value="on"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div><ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/CVE-2018/">CVE / 2018</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/技术分享/">技术分享</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/日志/">日志</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"><a href="/tags/随笔/" style="font-size: 15px;">随笔</a> <a href="/tags/CTF-web/" style="font-size: 15px;">CTF-web</a> <a href="/tags/漏洞利用/" style="font-size: 15px;">漏洞利用</a> <a href="/tags/机器学习框架/" style="font-size: 15px;">机器学习框架</a> <a href="/tags/GC/" style="font-size: 15px;">GC</a> <a href="/tags/技术分享/" style="font-size: 15px;">技术分享</a> <a href="/tags/Mircosoft/" style="font-size: 15px;">Mircosoft</a> <a href="/tags/code/" style="font-size: 15px;">code</a> <a href="/tags/固件/" style="font-size: 15px;">固件</a> <a href="/tags/fuzz/" style="font-size: 15px;">fuzz</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2020/07/18/Cisco-IOS-分析/">Cisco-IOS 分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/06/28/Chrome-沙盒逃逸/">Chrome 沙盒逃逸</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/30/iseaCMS/">iseaCMS</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/16/BUCTF-web14-20/">BUCTF.web.14-20</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/BUUCTF-Web-1-14/">BUUCTF.web.1-13</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/10/CTf-JarvisOJ-250-300/">CTf-JarvisOJ-250-300</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/10/CTf-JarvisOJ-100-200/">CTf-JarvisOJ-100-200</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/02/26/cJson源码分析/">cJson源码分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/02/22/openwrt-uncompress/">firmware-uncompress</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/12/20/CVE-2019-5782/">CVE-2019-5782</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="https://yan-1-20.github.io/about/" title="Asprose" target="_blank">Asprose</a><ul></ul><a href="https://www.lucifaer.com/" title="Lucifaer" target="_blank">Lucifaer</a><ul></ul><a href="http://drac0nids.top/" title="Drac0nids" target="_blank">Drac0nids</a><ul></ul><a href="http://balis0ng.com/" title="balis0ng" target="_blank">balis0ng</a><ul></ul><a href="https://da7uran0ir.github.io/" title="Da7ura_n0ir" target="_blank">Da7ura_n0ir</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer"> Dad ， I will always love you.</div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=0.0.0" async></script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.0" async></script><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.css"><script type="text/javascript" color="255,0,0" opacity="0.7" zIndex="-1" count="100" src="//cdn.bootcss.com/canvas-nest.js/1.0.1/canvas-nest.min.js"></script><script type="text/javascript" src="/js/codeblock-resizer.js?v=0.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=0.0.0"></script></div></body></html>
