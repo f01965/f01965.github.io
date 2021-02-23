@@ -1,0 +1,150 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="“一个不像二进制同学的博客。”"><title>watchguard | f01965</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=0.0.0"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/normalize/8.0.0/normalize.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/pure-min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/grids-responsive-min.css"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = 'https://hm.baidu.com/hm.js?' + 'true';
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+  })();
+  </script></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">watchguard</h1><a id="logo" href="/.">f01965</a><p class="description">初闻不知曲中意，再听已是曲中人。</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">watchguard</h1><div class="post-meta">Feb 23, 2021<script src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js" async></script><span id="busuanzi_container_page_pv"> | <span id="busuanzi_value_page_pv"></span><span> 阅读</span></span></div><a class="disqus-comment-count" href="/2021/02/23/watchguard/#vcomment"><span class="valine-comment-count" data-xid="/2021/02/23/watchguard/"></span><span> 条评论</span></a><div class="post-content"><h2 id="WatchGuard"><a href="#WatchGuard" class="headerlink" title="WatchGuard"></a>WatchGuard</h2><p>WatchGuard 全球首创专用安全系统，在 1997 年首家将应用层安全运用到系统，并在 2004 年全球首创可全面升级的整合安全网关。2005 年 WatchGuard 推出了Fireware Pro 操作系统和 Firebox Peak 高端安全设备，2009 年 WatchGuard 推出了基于全新技术的 Fireware XTM 操作系统和 Firebox XTM 10系和8系高端安全设备，2011年推出3系列，20系列产品，并整合全球各种优秀的信息安全技术推出整合式的安全网络网关平台 (UTM，统一威胁管理)，为市场提供了更安全、更全面、更强大的安全设备。</p>
+<h4 id="从qcow2获取firebox的OS"><a href="#从qcow2获取firebox的OS" class="headerlink" title="从qcow2获取firebox的OS"></a>从qcow2获取firebox的OS</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 挂载</span></span><br><span class="line">root@kalifirmware:~/Desktop/watchguard<span class="comment"># rmmod nbd</span></span><br><span class="line">root@kalifirmware:~/Desktop/watchguard<span class="comment"># modprobe nbd max_part=8</span></span><br><span class="line">root@kalifirmware:~/Desktop/watchguard<span class="comment"># qemu-nbd --connect=/dev/nbd16 /root/Desktop/watchguard/hda.qcow2 </span></span><br><span class="line">qemu-nbd: Failed to open /dev/nbd16: No such file or directory</span><br><span class="line">qemu-nbd: Disconnect client, due to: Failed to <span class="built_in">read</span> request: Unexpected end-of-file before all bytes were <span class="built_in">read</span></span><br><span class="line">root@kalifirmware:~/Desktop/watchguard<span class="comment"># qemu-nbd --connect=/dev/nbd0 /root/Desktop/watchguard/hda.qcow2 </span></span><br><span class="line">root@kalifirmware:~/Desktop/watchguard<span class="comment"># </span></span><br><span class="line"></span><br><span class="line">qemu-nbd -c /dev/nbd0 rhel6u3.qcow2</span><br><span class="line">ll /dev/nbd*      <span class="comment">#这里查看一下</span></span><br><span class="line"></span><br><span class="line">http://smilejay.com/2012/11/how-to-mount<span class="_">-a</span>-qcow2-image/</span><br></pre></td></tr></table></figure>
+<p>执行完挂载命令之后，可以看到桌面上多3个设备文件。打开最大的那个，里面就是整个firebox的系统。</p>
+<p><img src="1.png" alt=""></p>
+<p>这3 文件所在位置，在 <strong>/media/root</strong> 下。用 tar 打包一下文件系统。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">root@kalifirmware:/media/root/0cf094c7-7cf6-4512-91d9-05d3a9936a89<span class="comment"># pwd</span></span><br><span class="line">/media/root/0cf094c7-7cf6-4512-91d9-05d3a9936a89</span><br><span class="line">root@kalifirmware:/media/root/0cf094c7-7cf6-4512-91d9-05d3a9936a89<span class="comment"># cd ..</span></span><br><span class="line">root@kalifirmware:/media/root<span class="comment"># pwd</span></span><br><span class="line">/media/root</span><br><span class="line">root@kalifirmware:/media/root<span class="comment"># ls</span></span><br><span class="line">0cf094c7-7cf6-4512-91d9-05d3a9936a89  d117db78-0065-4795-86ec-ca6224d91277</span><br><span class="line">5045bacf-d021-4cc7-ad13-72f990f4a207</span><br><span class="line">root@kalifirmware:/media/root<span class="comment">#</span></span><br></pre></td></tr></table></figure>
+<h3 id="WEB-UI-外网访问"><a href="#WEB-UI-外网访问" class="headerlink" title="WEB UI 外网访问"></a>WEB UI 外网访问</h3><p>参考链接：<a href="https://sakura-paris.org/WatchGuard" target="_blank" rel="noopener">https://sakura-paris.org/WatchGuard</a></p>
+<p>这里只是简单记录了下，具体过程看参考文章，写的很详细。</p>
+<p>它有ping traceroute  等操作，在 SYSTEM STATUS =&gt; Diagnostics =&gt; “Network”  下。</p>
+<p>想要外网能访问WEB UI，要配置端口映射。</p>
+<h4 id="1-创建-Static-NAT-规则"><a href="#1-创建-Static-NAT-规则" class="headerlink" title="1 创建 Static NAT 规则"></a>1 创建 Static NAT 规则</h4><p>首先，位置在 <code>Web UI -&gt; Firewall -&gt; SNAT</code></p>
+<p>点击 <code>ADD</code>，输入一个名字。然后在 <strong>SNAT MEMBERS</strong> 区域点击 <code>ADD</code></p>
+<p><img src="image-2.png" alt=""></p>
+<p>这里配置如下，HOST 填内网的 watchguard web ui 的 ip ，勾中 Set internal port to a different port ，端口填80。</p>
+<p><img src="image-3.png" alt=""></p>
+<p>最后ok ，然后保存。</p>
+<p><img src="image-4.png" alt="image-20201117145447735" style="zoom:50%;"></p>
+<h4 id="创建防火墙规则"><a href="#创建防火墙规则" class="headerlink" title="创建防火墙规则"></a>创建防火墙规则</h4><p>位置：Web UI -&gt; Firewall -&gt; Firewall Policies</p>
+<p>Add Policy -&gt; 选择 Custom，然后点击右侧的 Add 去创建一个 “Policy Template”，如下图配置。</p>
+<p><img src="image-5.png" alt=""></p>
+<p>回到了 Add Firewall Policy 界面，选一下TCP-UDP-Proxy。然后点 ADD POLICY。</p>
+<p><img src="image-6.png" alt=""></p>
+<p>继续配置。如下。</p>
+<p><img src="image-7.png" alt=""></p>
+<p>最后点击 SAVE 即可。这样就创建了一个从路由器公网 tcp/80 到 10.2.6.56:tcp/8080 的端口映射。</p>
+<p>这样就能路由器公网上访问到 watchguard web ui 。</p>
+<p><img src="image-8.png" alt=""></p>
+<h1 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h1><p>能够外部网访问web UI后，用burpsuit进行抓包分析测试。</p>
+<h3 id="登陆"><a href="#登陆" class="headerlink" title="登陆"></a>登陆</h3><p>首先是对登陆过程分析。</p>
+<p><img src="login-1.png" alt=""></p>
+<p>从抓到的包来看，用户名和密码都是明文传输的。看起来比较危险，但这或许是firefox web ui 正常情况只能在内网访问，所以不需要做加密处理也没问题。</p>
+<p>从cookie 这里看到2个字段，sessionid<code>和</code>session_id` 。 经过测试发现它这个 <strong>session_id</strong> 没什么用，有 <strong>sessionid</strong> 就行。而且这个 <strong>sessionid  不会过期，只要是正确的就可以。</strong></p>
+<p>登陆成功后，返回的包。</p>
+<p><img src="login-2.png" alt=""></p>
+<h3 id="Ping"><a href="#Ping" class="headerlink" title="Ping"></a>Ping</h3><p>在登陆这块分析了一圈，没有什么发现。所以，还是登陆进来后到处看看。</p>
+<p>在 System status -&gt; Diagnostics -&gt; network  有 ping，traceroute等命令，可以填上 IP 地址进行测试。分析一下这里，有否有命令执行这样的漏洞。</p>
+<p>抓个包先看看。</p>
+<p><img src="ping-0.png" alt=""></p>
+<p>数据传输以json格式在进行，那么大概率没啥希望。</p>
+<p>经过一番寻找，找到处理这里的脚本是 <strong>PageStatusDiagnostics.pyc</strong> ，是个pyc，用uncompyle反编译一下。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">root@kalifirmware:~/Desktop/watchguard<span class="comment"># pip install uncompyle</span></span><br><span class="line">...</span><br><span class="line">root@kalifirmware:~/Desktop/watchguard<span class="comment"># uncompyle6 PageStatusDiagnostics.pyc &gt; PageStatusDiagnostics.py</span></span><br></pre></td></tr></table></figure>
+<p>源码如下。</p>
+<p><img src="ping-1.png" alt=""></p>
+<p>看源码就可以知道，command 参数被限制死了。然后通过 /utility/xxx 来执行args。这不会存在什么命令注入。</p>
+<p>想找命令注入，那么得有system，eval等这类函数才行。那么，接着对整个文件系统进行搜索，匹配关键字。</p>
+<h1 id="Wgagent"><a href="#Wgagent" class="headerlink" title="Wgagent"></a>Wgagent</h1><p>Watchguard 的web 服务由 wgagent 控制。</p>
+<p><img src="image-9.png" alt=""></p>
+<p>用IDA对wgagent 进行分析。梳理登陆的流程，以及页面的访问和验证逻辑。</p>
+<h2 id="Main"><a href="#Main" class="headerlink" title="Main"></a>Main</h2><p>主函数main，AddListener函数中包含了web页面的控制流程。</p>
+<p><img src="image-10.png" alt=""></p>
+<p>具体在函数 sub_415796 -&gt; sub_410A0E</p>
+<p><img src="image-11.png" alt=""></p>
+<p><img src="image-12.png" alt=""></p>
+<h2 id="sub-410A0E"><a href="#sub-410A0E" class="headerlink" title="sub_410A0E"></a>sub_410A0E</h2><p>主要的逻辑如下。</p>
+<p><img src="image-13.png" alt=""></p>
+<p>SCRIPT_NAME 中取出请求。下面用if 进行判断，若不是 /ping 请求，就走else。这个else里会进行登陆的验证。若是 /login 或 /agent/login 就进行登陆的账户验证。</p>
+<p>不是的话，就去下一个else，如下图。</p>
+<p><img src="image-14.png" alt=""></p>
+<p>这里会计算sessionid 或者sid 是不是正确的。不正确就返回Unauthorized，过期就返回expired。</p>
+<p><img src="image-15.png" alt=""></p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>对watchguard web ui这块初步的分析，发现它的很多功能都是靠 js 和 py 来实现和控制。故，与路由器的web服务不同。路由器的Web服务大多有一个核心的处理http请求的 ELF 文件。对于watchguard，它用js py来控制，这相当于提升了安全性。不可能存在snprint ，system 这样命令注入的漏洞。 </p>
+<p>所以，需要另外想办法。下面，对watchguard曾经被曝光的漏洞进行归纳整理。看看以前发现的漏洞，都是什么类型的，方便进一步的研究。</p>
+<h2 id="vulnerability"><a href="#vulnerability" class="headerlink" title="vulnerability"></a>vulnerability</h2><ul>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-10532" target="_blank" rel="noopener">CVE-2020-10532</a> </p>
+<p>5.8.5.10317之前的WatchGuard Fireware中的AD Helper组件允许远程攻击者通过/ domains / list URI发现明文密码。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-18652" target="_blank" rel="noopener">CVE-2019-18652</a></p>
+<p>通过12.1.3在WatchGuard XMT515上已发现基于DOM的XSS漏洞，从而允许远程攻击者通过诱骗受害者单击虚构链接来在受害者的浏览器中执行JavaScript。 有效负载已在Microsoft Internet Explorer 11.418.18362.0和Microsoft Edge 44.18362.387.0（Microsoft EdgeHTML 18.18362）中进行了测试。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-10578" target="_blank" rel="noopener">CVE-2018-10578</a></p>
+<p>在固件版本为1.2.9.15之前的WatchGuard AP100，AP102和AP200设备以及固件版本为2.0.0.10之前的AP300设备上发现了问题。 更改密码表单中“旧密码”字段的不正确验证使攻击者可以绕过此字段的验证。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-10577" target="_blank" rel="noopener">CVE-2018-10577</a></p>
+<p>在固件版本为1.2.9.15之前的WatchGuard AP100，AP102和AP200设备以及固件版本为2.0.0.10之前的AP300设备上发现了问题。 文件上传功能允许在Web界面上通过身份验证的任何用户将包含代码的文件上传到Web根目录，从而允许这些文件以root身份执行。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-10576" target="_blank" rel="noopener">CVE-2018-10576</a> </p>
+<p>在固件版本低于1.2.9.15的WatchGuard AP100，AP102和AP200设备上发现了一个问题。本机访问点Web UI进行的身份验证处理不当，从而允许使用本地系统帐户（而不是专用的纯Web用户）进行身份验证。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-10575" target="_blank" rel="noopener">CVE-2018-10575 </a> </p>
+<p>在固件版本低于1.2.9.15的WatchGuard AP100，AP102和AP200设备上发现了一个问题。 对于/ bin / false shell 程序的非特权SSH帐户，存在硬编码的凭据。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-8056" target="_blank" rel="noopener">CVE-2017-8056</a></p>
+<p>WatchGuard Fireware v11.12.1和更早版本在XML-RPC代理中错误地处理了引用XML外部实体（XXE）的请求。 这会导致Firebox wgagent进程崩溃。 此过程崩溃将终止所有到Firebox的经过身份验证的会话，包括管理连接，并在过程恢复之前阻止新的经过身份验证的会话。 当wgagent进程恢复时，Firebox的性能可能也会整体下降。 攻击者可能会不断发送包含对外部实体的引用的XML-RPC请求，以对受影响的Firebox进行有限的拒绝服务（DoS）攻击。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-8055" target="_blank" rel="noopener">CVE-2017-8055</a></p>
+<p>WatchGuard Fireware允许用户枚举，例如在Firebox XML-RPC登录处理程序中。 包含发送到Fireware v11.12.1和更早版本中的XML-RPC代理的空白密码的登录请求将返回对有效和无效用户名的不同响应。 攻击者可能利用此漏洞来枚举受影响的Firebox上的有效用户名。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-14616" target="_blank" rel="noopener">CVE-2017-14616</a></p>
+<p>在12.0之前的WatchGuard Fireware中发现了FBX-5312问题。 如果使用包含空成员元素的XML消息在XML-RPC界面中尝试登录，则wgagent会崩溃，并注销在UI中打开了会话的任何用户。 通过连续执行失败的登录尝试，将无法对设备进行UI管理。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-14615" target="_blank" rel="noopener">CVE-2017-14615</a></p>
+<p>在12.0之前的WatchGuard Fireware中发现了FBX-5313问题。 当对XML-RPC接口的登录端点进行失败的登录尝试时，如果将经过正确编码以供XML解析器使用的JavaScript代码作为用户元素的值嵌入，则该代码将在任何 登录到Web UI中的用户，访问“流量监控器”部分的“事件”和“全部”。 副作用是，重新启动设备之前，流量监视器中不会显示其他事件。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2016-7089" target="_blank" rel="noopener">CVE-2016-7089</a></p>
+<p>WatchGuard RapidStream设备允许本地用户通过特制的ifconfig命令（也称为ESCALATEPLOWMAN）获得特权并执行任意命令。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2016-6154" target="_blank" rel="noopener">CVE-2016-6154</a></p>
+<p>Watchguard Fireware 11.11操作系统中的身份验证小程序已反映了XSS（这也可能导致打开重定向）。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2015-5453" target="_blank" rel="noopener">CVE-2015-5453</a></p>
+<p>在版本150522之前，Watchguard XCS 9.2和10.0允许经过远程身份验证的用户通过ADMIN / mailqueue.spl的id参数中的 shell metacharacters  执行任意命令。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2015-5452" target="_blank" rel="noopener">CVE-2015-5452</a></p>
+<p>在版本150522之前的Watchguard XCS 9.2和10.0中的SQL注入漏洞允许远程攻击者通过sid cookie执行任意SQL命令，如对borderpost / imp / compose.php3的请求所示。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2014-6413" target="_blank" rel="noopener">CVE-2014-6413</a></p>
+<p>通过防火墙/策略脚本中的poll_name参数，WatchGuard XTM 11.8.3中存在一个跨站点脚本（XSS）漏洞。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2014-0338" target="_blank" rel="noopener">CVE-2014-0338</a></p>
+</li>
+<li><p>WatchGuard Fireware XTM 11.8.3之前的防火墙策略管理页面中的多个跨站点脚本（XSS）漏洞允许远程攻击者通过pol_name参数注入任意Web脚本或HTML。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-6021" target="_blank" rel="noopener">CVE-2013-6021</a></p>
+<p>11.8之前的WatchGuard WSM和Fireware中WGagent中的缓冲区溢出允许远程攻击者通过cookie中的长sessionid值执行任意代码。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-5702" target="_blank" rel="noopener">CVE-2013-5702</a></p>
+<p>11.8之前的WatchGuard WSM和Fireware中WebCenter中的多个跨站点脚本（XSS）漏洞允许远程攻击者通过未指定的参数注入任意Web脚本或HTML。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2013-5701" target="_blank" rel="noopener">CVE-2013-5701</a></p>
+<p>WatchGuard Server Center 11.7.4、11.7.3和更早版本中的（1）Watchguard Log Collector（wlcollector.exe）和（2）Watchguard WebBlocker Server（wbserver.exe）中存在多个不受信任的搜索路径漏洞，它们允许本地用户获得特权 通过该应用程序的bin目录中的特洛伊木马wgpr.dll文件。</p>
+</li>
+<li><p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2011-2165" target="_blank" rel="noopener">CVE-2011-2165</a></p>
+<p>WatchGuard XCS 9.0和9.1中的STARTTLS实现没有适当地限制I / O缓冲，它允许中间人攻击者通过发送在TLS到位后处理的明文命令将命令插入加密的SMTP会话中，这与相关 遭受“明文命令注入”攻击，与CVE-2011-0411相似。</p>
+</li>
+</ul>
+</div><iframe src="/donate/?AliPayQR=null&amp;WeChatQR=/img/mePic.jpg&amp;GitHub=null&amp;BTCQR=null&amp;BTCKEY=null&amp;PayPal=null" style="overflow-x:hidden; overflow-y:hidden; border:0xp none #fff; min-height:240px; width:100%;" frameborder="0" scrolling="no"></iframe><div class="tags"><a href="/tags/技术分享-固件/">技术分享 固件</a></div><div class="post-nav"><a class="next" href="/2021/02/18/fortigate/">fortigate</a></div><div id="vcomment"></div><script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'o3qEIvAEzJfA0jPzjvyVeUwo-gzGzoHsz',
+  appKey:'VBV3VN2vtqwbGqHGFeNL86iw',
+  placeholder:'thanks for you read',
+  avatar:'mm',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.baidu.com/baidu" method="get" accept-charset="utf-8" target="_blank"><input type="search" name="word" maxlength="20" placeholder="Search"/><input type="hidden" name="si" value="https://f01965.github.io"/><input name="tn" type="hidden" value="bds"/><input name="cl" type="hidden" value="3"/><input name="ct" type="hidden" value="2097152"/><input name="s" type="hidden" value="on"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div><ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/CVE-2018/">CVE / 2018</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/技术分享/">技术分享</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/日志/">日志</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"><a href="/tags/Mircosoft/" style="font-size: 15px;">Mircosoft</a> <a href="/tags/漏洞利用/" style="font-size: 15px;">漏洞利用</a> <a href="/tags/CTF-web/" style="font-size: 15px;">CTF-web</a> <a href="/tags/漏洞利用-固件/" style="font-size: 15px;">漏洞利用 固件</a> <a href="/tags/机器学习框架/" style="font-size: 15px;">机器学习框架</a> <a href="/tags/GC/" style="font-size: 15px;">GC</a> <a href="/tags/随笔/" style="font-size: 15px;">随笔</a> <a href="/tags/技术分享-固件/" style="font-size: 15px;">技术分享 固件</a> <a href="/tags/技术分享/" style="font-size: 15px;">技术分享</a> <a href="/tags/code/" style="font-size: 15px;">code</a> <a href="/tags/fuzz/" style="font-size: 15px;">fuzz</a> <a href="/tags/固件/" style="font-size: 15px;">固件</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2021/02/23/watchguard/">watchguard</a></li><li class="post-list-item"><a class="post-list-link" href="/2021/02/18/fortigate/">fortigate</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/15/spiderMonkey-漏洞利用简介3/">spiderMonkey 漏洞利用简介3</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/15/spiderMonkey-漏洞利用简介2/">spiderMonkey 漏洞利用简介2</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/15/spiderMonkey-漏洞利用简介/">spiderMonkey 漏洞利用简介</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/07/27/X86-ShellCode-2/">X86-ShellCode编写2</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/07/27/X86-ShellCode-1/">X86-ShellCode编写1</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/07/26/CVE-2017-17215-拓展/">CVE-2017-17215 拓展</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/07/25/CVE-2017-17215/">CVE-2017-17215</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/07/18/Cisco-IOS-分析/">Cisco-IOS 分析</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="https://yan-1-20.github.io/about/" title="Asprose" target="_blank">Asprose</a><ul></ul><a href="https://www.lucifaer.com/" title="Lucifaer" target="_blank">Lucifaer</a><ul></ul><a href="http://drac0nids.top/" title="Drac0nids" target="_blank">Drac0nids</a><ul></ul><a href="http://balis0ng.com/" title="balis0ng" target="_blank">balis0ng</a><ul></ul><a href="https://da7uran0ir.github.io/" title="Da7ura_n0ir" target="_blank">Da7ura_n0ir</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer"> Dad ， I will always love you.</div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=0.0.0" async></script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.0" async></script><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.css"><script type="text/javascript" color="255,0,0" opacity="0.7" zIndex="-1" count="100" src="//cdn.bootcss.com/canvas-nest.js/1.0.1/canvas-nest.min.js"></script><script type="text/javascript" src="/js/codeblock-resizer.js?v=0.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=0.0.0"></script></div></body></html>
