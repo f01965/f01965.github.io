@@ -1,0 +1,89 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="“一个不像二进制同学的博客。”"><title>DCS-960l | f01965</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=0.0.0"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/normalize/8.0.0/normalize.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/pure-min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/grids-responsive-min.css"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = 'https://hm.baidu.com/hm.js?' + 'true';
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+  })();
+  </script></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">DCS-960l</h1><a id="logo" href="/.">f01965</a><p class="description">初闻不知曲中意，再听已是曲中人。</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">DCS-960l</h1><div class="post-meta">Nov 18, 2019<script src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js" async></script><span id="busuanzi_container_page_pv"> | <span id="busuanzi_value_page_pv"></span><span> 阅读</span></span></div><a class="disqus-comment-count" href="/2019/11/18/DCS-960l/#vcomment"><span class="valine-comment-count" data-xid="/2019/11/18/DCS-960l/"></span><span> 条评论</span></a><div class="post-content"><p><strong>DCS-960L hnap_service</strong></p>
+<p>固件版本：REVA 1.09.02</p>
+<p>下载：<a href="ftp://ftp2.dlink.com/PRODUCTS/DCS-960L/" target="_blank" rel="noopener">ftp://ftp2.dlink.com/PRODUCTS/DCS-960L/</a>   </p>
+<h1 id="Qemu-环境模拟"><a href="#Qemu-环境模拟" class="headerlink" title="Qemu 环境模拟"></a>Qemu 环境模拟</h1><p>Binwalk 能直接解出文件系统，查看一下busybox 是MIS big endian。大端的固件，一般模拟出来的eth0 ip 可能是 192.168.0.1 ，所以创建配置就用如下命令。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">brctl addbr Virbr0</span><br><span class="line"></span><br><span class="line">ifconfig Virbr0 192.168.0.10/24 up </span><br><span class="line"></span><br><span class="line">tunctl -t tap0</span><br><span class="line"></span><br><span class="line">ifconfig tap0 192.168.0.2/24 up</span><br><span class="line"></span><br><span class="line">brctl addif Virbr0 tap0</span><br><span class="line"></span><br><span class="line">qemu-system-mips -M malta -kernel vmlinux-2.6.32-5-4kc-malta -hda debian_squeeze_mips_standard.qcow2 -append <span class="string">"root=/dev/sda1 console=tty0"</span> -netdev tap,id=tapnet,ifname=tap0,script=no -device rtl8139,netdev=tapnet –nographic</span><br></pre></td></tr></table></figure>
+<p>然后root登陆，把qemu里的eth0改了：<code>ifconfig eth0 192.168.0.1/24 up</code>。把解压出来的文件系统传上去并解压出来，然后用命令挂载一下，然后chroot：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mount -o <span class="built_in">bind</span> /dev ./squashfs-root/dev/</span><br><span class="line"></span><br><span class="line">mount -t proc /proc/ ./squashfs-root/proc/</span><br><span class="line"></span><br><span class="line">chroot squashfs-root /bin/sh</span><br></pre></td></tr></table></figure>
+<p>接着，要模拟web服务。查看文件结构，看到 /etc 下有rcS 脚本，那就执行这个脚本。另起一个bash ，用ssh 连上qemu。然后去执行./rcS。</p>
+<p>​                               <img src="image-1.png" alt=""></p>
+<p>可以看到一大片输出，最后停着。去另一个bash查看ip。 </p>
+<p>​                                <img src="image-2.png" alt=""></p>
+<p>看到有br0，eth0。但是br0没有ip，给它一个。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ifconfig eth0 192.168.0.1/24 up</span><br><span class="line"></span><br><span class="line">ifconfig br0 192.168.0.11/24 up</span><br></pre></td></tr></table></figure>
+<p>然后去浏览器访问192.168.0.1，弹出一个对话框，要输入账号密码。在/etc 目录有个passwd_default文件，里面有默认账户密码。</p>
+<p>账户admin，密码为空。登陆成功，web服务模拟成功。</p>
+<p><img src="image-3.png" alt=""></p>
+<p>后续要测试hnap_service，它是在/web/cgi/hnap目录下。这里先用ps看看运行了什么程序。</p>
+<p> <img src="image-4.png" alt=""></p>
+<p>没有看到hnap_service，但是有hnap_push_service在运行。只要web服务模拟成功了，后续的测试都不成问题。</p>
+<h1 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h1><p>根据提供的exp来看，应该是hnap_service中的SOAPAction字段存在溢出。多半是个栈溢出。这里用IDA分析hnap_service，无法F5。所以不用IDA，用Ghidra。</p>
+<p>定位到关键函数：main(void)</p>
+<p> <img src="image-5.png" alt=""></p>
+<p>实际上漏洞就在这里，fread() 造成。从stdin读取的数据，赋给了acStack131832。而acStack131832的长度只有0x20004。</p>
+<p>​                                                              <img src="image-6.png" alt=""></p>
+<p>由于读入的数据包含了SOAPAction字段的值，而长度依据是 <strong>n，而</strong>n最大为0x1fffff。所以，只要SOAPAction的值够长，就能让acStack131832溢出。而且是栈溢出。</p>
+<h2 id="发包测试"><a href="#发包测试" class="headerlink" title="发包测试"></a>发包测试</h2><p>这里用burp来发包进行测试。</p>
+<p>发送的数据如下。注意这里的cookie是随便写的。</p>
+<p>​                                         <img src="image-7.png" alt=""></p>
+<p>得到回包。</p>
+<p> <img src="image-8.png" alt=""></p>
+<p>同时，能从启动rcS的qemu终端看到回显。如下。</p>
+<p><img src="image-9.png" alt=""></p>
+<p>这验证了上面的分析。</p>
+<p>那么接下来就是让SOAPAction字段超长，让他覆盖掉栈上其他数据，比如说函数的返回地址，这样就能控制程序的执行流程。需要多长，就要进行具体的调试分析。</p>
+<p>但在分析利用之前，需要搞清楚为什么不需要身份认证。</p>
+<h2 id="Authorization"><a href="#Authorization" class="headerlink" title="Authorization"></a>Authorization</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">HTTP协议中的 Authorization 请求消息头含有服务器用于验证用户代理身份的凭证，通常会在服务器返回401 Unauthorized 状态码以及WWW-Authenticate 消息头之后在后续请求中发送此消息头。</span><br></pre></td></tr></table></figure>
+<p>用 Authorization 来进行身份认证。</p>
+<p> <img src="image-10.png" alt=""></p>
+<p>YWRtaW46 是base64加密字符。解密的结果就是账户和密码的组合。</p>
+<h2 id="httpd"><a href="#httpd" class="headerlink" title="httpd"></a>httpd</h2><p>这里，稍微分析一下httpd，搞清楚它是怎么处理用户的请求</p>
+<p> <img src="image-11.png" alt=""></p>
+<p>这块代码就是处理请求的核心部分。通过一个switch来决定。Swtich的值来自于函数FUN_00401c2c。</p>
+<p>那么，猜测这个函数的功能就是进行身份认证。还可以看到对账户和密码进行加密的地方。如下。</p>
+<p> <img src="image-12.png" alt=""></p>
+<h3 id="hnap-service身份认证"><a href="#hnap-service身份认证" class="headerlink" title="hnap_service身份认证"></a>hnap_service身份认证</h3><p>身份认证靠的是Authorization。但是hnap_service服务，为什么不需要认证？我猜想是，hnap_service由httpd进程处理然后在转交，处理的过程应该是忽略了身份认证。</p>
+<p>通过静态分析 httpd中，可以看到hnap_service分发的过程。</p>
+<p> <img src="image-13.png" alt=""></p>
+<p>前面说httpd是通过一个switch来处理请求。这里，就是比较字符串，变量 local_34 就是 /hnap/hnap_service。</p>
+<p> <img src="image-14.png" alt=""></p>
+<p>所以分发hnap_service请求的函数，应该是<strong>FUN_00402040()</strong>。但是，身份认证去哪了呢？在下面不远处看到如下代码。</p>
+<p><img src="image-15.png" alt=""></p>
+<p>401.html 是未授权时，返回的页面。说明<strong>checkToken_localrecording</strong> 应该才是校验身份的。而分发hnap_service的函数<strong>FUN_00402040()</strong>是在校验身份之前。</p>
+<p>那这就说明下图字符串定义的服务，都不需要认证身份。</p>
+<p>  <img src="image-14.png" alt=""></p>
+<p>也就是cgi结尾的请求，以及 <strong>/fvcgi/storage/localstorage_download.ts，/onvif/onvif_service，/cam/webapi_service，/hnap/hnap_service，/localrecording/</strong>。这是一个有意思的发现。但是这只是静态分析的结果，需要动态调试进行验证。</p>
+<p>接着，去看看函数FUN_00402040做了什么。</p>
+<p> <img src="image-16.png" alt=""></p>
+<p>代码用到了 execve，那这句可能是用来启动其他服务的。把需要处理的请求，通过execve调用对应的程序，并传递过去</p>
+<h1 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h1><p>首先使用gdb对httpd进程进行挂载调试。</p>
+<h2 id="Mips-gdb-调试"><a href="#Mips-gdb-调试" class="headerlink" title="Mips gdb 调试"></a>Mips gdb 调试</h2><p>调试需要mips 32 大端的gdb。网上没有，只能自己编译一份。需要Buildroot环境。具体编译，参考：<a href="https://blog.csdn.net/zhy025907/article/details/52332528" target="_blank" rel="noopener">https://blog.csdn.net/zhy025907/article/details/52332528</a></p>
+<p>注意的地方，环境变量要设置正确。</p>
+<p>最后得到可用的gdb。</p>
+<p> <img src="image-17.png" alt=""></p>
+<h3 id="注"><a href="#注" class="headerlink" title="注"></a>注</h3><p>最后，我并没有把这个漏洞分析完。时间有点久了，原因好像是 gdb 调试不起来。上面的 gdb.7.11 版本依然无法调试 http 进程。然后我应该是编译了一份gdb.7.6 ，但是还是不行。而 gdb.7 一下的版本我用 Buildroot 没有编译成功。总会出很多原因。。。所以没有继续分析下去。</p>
+</div><iframe src="/donate/?AliPayQR=null&amp;WeChatQR=/img/mePic.jpg&amp;GitHub=null&amp;BTCQR=null&amp;BTCKEY=null&amp;PayPal=null" style="overflow-x:hidden; overflow-y:hidden; border:0xp none #fff; min-height:240px; width:100%;" frameborder="0" scrolling="no"></iframe><div class="tags"><a href="/tags/固件/">固件</a></div><div class="post-nav"><a class="pre" href="/2019/11/20/gdb交叉编译/">gdb交叉编译</a><a class="next" href="/2019/11/12/cve-2017-7269-C-C-利用实现/">cve-2017-7269</a></div><div id="vcomment"></div><script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'o3qEIvAEzJfA0jPzjvyVeUwo-gzGzoHsz',
+  appKey:'VBV3VN2vtqwbGqHGFeNL86iw',
+  placeholder:'thanks for you read',
+  avatar:'mm',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.baidu.com/baidu" method="get" accept-charset="utf-8" target="_blank"><input type="search" name="word" maxlength="20" placeholder="Search"/><input type="hidden" name="si" value="https://f01965.github.io"/><input name="tn" type="hidden" value="bds"/><input name="cl" type="hidden" value="3"/><input name="ct" type="hidden" value="2097152"/><input name="s" type="hidden" value="on"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div><ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/CVE-2018/">CVE / 2018</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/技术分享/">技术分享</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/日志/">日志</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"><a href="/tags/GC/" style="font-size: 15px;">GC</a> <a href="/tags/漏洞利用/" style="font-size: 15px;">漏洞利用</a> <a href="/tags/固件/" style="font-size: 15px;">固件</a> <a href="/tags/CTF-web/" style="font-size: 15px;">CTF-web</a> <a href="/tags/机器学习框架/" style="font-size: 15px;">机器学习框架</a> <a href="/tags/技术分享/" style="font-size: 15px;">技术分享</a> <a href="/tags/随笔/" style="font-size: 15px;">随笔</a> <a href="/tags/Mircosoft/" style="font-size: 15px;">Mircosoft</a> <a href="/tags/漏洞分析/" style="font-size: 15px;">漏洞分析</a> <a href="/tags/code/" style="font-size: 15px;">code</a> <a href="/tags/技术分享-固件/" style="font-size: 15px;">技术分享/固件</a> <a href="/tags/fuzz/" style="font-size: 15px;">fuzz</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2021/02/25/fortigate-Vulnerability/">fortigate Vulnerability</a></li><li class="post-list-item"><a class="post-list-link" href="/2021/02/23/watchguard/">watchguard</a></li><li class="post-list-item"><a class="post-list-link" href="/2021/02/18/fortigate/">fortigate</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/15/spiderMonkey-漏洞利用简介3/">spiderMonkey 漏洞利用简介3</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/15/spiderMonkey-漏洞利用简介2/">spiderMonkey 漏洞利用简介2</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/15/spiderMonkey-漏洞利用简介/">spiderMonkey 漏洞利用简介</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/07/winAFL实践/">winAFL实践</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/07/27/X86-ShellCode-2/">X86-ShellCode编写2</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/07/27/X86-ShellCode-1/">X86-ShellCode编写1</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/07/26/CVE-2017-17215-拓展/">CVE-2017-17215 拓展</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="https://yan-1-20.github.io/about/" title="Asprose" target="_blank">Asprose</a><ul></ul><a href="https://www.lucifaer.com/" title="Lucifaer" target="_blank">Lucifaer</a><ul></ul><a href="http://drac0nids.top/" title="Drac0nids" target="_blank">Drac0nids</a><ul></ul><a href="http://balis0ng.com/" title="balis0ng" target="_blank">balis0ng</a><ul></ul><a href="https://da7uran0ir.github.io/" title="Da7ura_n0ir" target="_blank">Da7ura_n0ir</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer"> Dad ， I will always love you.</div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=0.0.0" async></script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.0" async></script><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.css"><script type="text/javascript" color="255,0,0" opacity="0.7" zIndex="-1" count="100" src="//cdn.bootcss.com/canvas-nest.js/1.0.1/canvas-nest.min.js"></script><script type="text/javascript" src="/js/codeblock-resizer.js?v=0.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=0.0.0"></script></div></body></html>

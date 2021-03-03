@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="“一个不像二进制同学的博客。”"><title>固件解包小结 | f01965</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=0.0.0"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/normalize/8.0.0/normalize.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/pure-min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/grids-responsive-min.css"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = 'https://hm.baidu.com/hm.js?' + 'true';
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+  })();
+  </script></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">固件解包小结</h1><a id="logo" href="/.">f01965</a><p class="description">初闻不知曲中意，再听已是曲中人。</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">固件解包小结</h1><div class="post-meta">Mar 16, 2020<script src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js" async></script><span id="busuanzi_container_page_pv"> | <span id="busuanzi_value_page_pv"></span><span> 阅读</span></span></div><a class="disqus-comment-count" href="/2020/03/16/固件解包小结/#vcomment"><span class="valine-comment-count" data-xid="/2020/03/16/固件解包小结/"></span><span> 条评论</span></a><div class="post-content"><h1 id="Squashfs-文件系统"><a href="#Squashfs-文件系统" class="headerlink" title="Squashfs 文件系统"></a>Squashfs 文件系统</h1><p>该文件系统，注意是依据头部的Magic值来识别。常见的有：sqsh，hsqs，qshs，shsq，hsqt，tqsh，sqlz 7种。</p>
+<p>根据头部偏移第25个byte位置的值，来确定压缩的版本。</p>
+<p>举例：</p>
+<p><img src="image001.png" alt=""></p>
+<p>上图就是一个Magic值为 shsq 的压缩文件系统。压缩的版本号是：03（第二个红框位置）。</p>
+<h2 id="解压缩方法"><a href="#解压缩方法" class="headerlink" title="解压缩方法"></a>解压缩方法</h2><ol>
+<li>Binwalk </li>
+</ol>
+<p>常规方法就是使用工具binwalk。使用命令：binwalk –Me xxx.bin</p>
+<p>但是这个方法缺陷在于，如果binwalk识别不出来文件系统，就无法解压。并且，binwalk解压能解压的版本，依赖的binwalk自带的squashfs工具版本。</p>
+<ol start="2">
+<li>Firmware-mod-kit </li>
+</ol>
+<p>下载 <a href="https://github.com/rampageX/firmware-mod-kit" target="_blank" rel="noopener">https://github.com/rampageX/firmware-mod-kit</a></p>
+<p>使用这个工具，在目录：/firmware-mod-kit/trunk/src/others/ 下，有多个版本的squashfs解压工具。如下图。</p>
+<p><img src="image002.jpg" alt=""></p>
+<p>这里面有各种不同的版本，使用这个工具基本能解压出所有常见的squshfs文件系统。</p>
+<p>但是需要注意的是，在解压的时候，要先从原始Bin文件中分离出squshfs的部分，在进行解压。</p>
+<h1 id="Cramfs"><a href="#Cramfs" class="headerlink" title="Cramfs"></a>Cramfs</h1><p>这种文件系统，头部Magic值是 0x28cd3d45。不确定大端小端的情况下，也可能是反过来的。解压放法还是使用Binwalk。目前，还没有遇到该文件系统的固件包。</p>
+<h1 id="ELF封装"><a href="#ELF封装" class="headerlink" title="ELF封装"></a>ELF封装</h1><p>有些bin文件，分析发现是ELF封装的。如下图。</p>
+<p><img src="image003.jpg" alt=""></p>
+<p>还可以看到里面的数据用 Zip 压缩存放，有个名为C7200-AD.bin。</p>
+<p>这种bin是用来做dynamips镜像文件的。根据EVE-NG的官方说明，如下图。</p>
+<p><img src="image004.jpg" alt=""></p>
+<p>使用命令： unzip –p xxx.bin &gt; xxx.image</p>
+<p>就可以把bin转换为dynamips可用的image。</p>
+</div><iframe src="/donate/?AliPayQR=null&amp;WeChatQR=/img/mePic.jpg&amp;GitHub=null&amp;BTCQR=null&amp;BTCKEY=null&amp;PayPal=null" style="overflow-x:hidden; overflow-y:hidden; border:0xp none #fff; min-height:240px; width:100%;" frameborder="0" scrolling="no"></iframe><div class="tags"><a href="/tags/技术分享/">技术分享</a></div><div class="post-nav"><a class="pre" href="/2020/06/28/Chrome-沙盒逃逸/">Chrome 沙盒逃逸</a><a class="next" href="/2020/03/16/BUCTF-web14-20/">BUCTF.web.14-20</a></div><div id="vcomment"></div><script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'o3qEIvAEzJfA0jPzjvyVeUwo-gzGzoHsz',
+  appKey:'VBV3VN2vtqwbGqHGFeNL86iw',
+  placeholder:'thanks for you read',
+  avatar:'mm',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.baidu.com/baidu" method="get" accept-charset="utf-8" target="_blank"><input type="search" name="word" maxlength="20" placeholder="Search"/><input type="hidden" name="si" value="https://f01965.github.io"/><input name="tn" type="hidden" value="bds"/><input name="cl" type="hidden" value="3"/><input name="ct" type="hidden" value="2097152"/><input name="s" type="hidden" value="on"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div><ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/CVE-2018/">CVE / 2018</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/技术分享/">技术分享</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/日志/">日志</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"><a href="/tags/GC/" style="font-size: 15px;">GC</a> <a href="/tags/漏洞利用/" style="font-size: 15px;">漏洞利用</a> <a href="/tags/固件/" style="font-size: 15px;">固件</a> <a href="/tags/CTF-web/" style="font-size: 15px;">CTF-web</a> <a href="/tags/机器学习框架/" style="font-size: 15px;">机器学习框架</a> <a href="/tags/技术分享/" style="font-size: 15px;">技术分享</a> <a href="/tags/随笔/" style="font-size: 15px;">随笔</a> <a href="/tags/Mircosoft/" style="font-size: 15px;">Mircosoft</a> <a href="/tags/漏洞分析/" style="font-size: 15px;">漏洞分析</a> <a href="/tags/code/" style="font-size: 15px;">code</a> <a href="/tags/技术分享-固件/" style="font-size: 15px;">技术分享/固件</a> <a href="/tags/fuzz/" style="font-size: 15px;">fuzz</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2021/02/25/fortigate-Vulnerability/">fortigate Vulnerability</a></li><li class="post-list-item"><a class="post-list-link" href="/2021/02/23/watchguard/">watchguard</a></li><li class="post-list-item"><a class="post-list-link" href="/2021/02/18/fortigate/">fortigate</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/15/spiderMonkey-漏洞利用简介3/">spiderMonkey 漏洞利用简介3</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/15/spiderMonkey-漏洞利用简介2/">spiderMonkey 漏洞利用简介2</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/15/spiderMonkey-漏洞利用简介/">spiderMonkey 漏洞利用简介</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/07/winAFL实践/">winAFL实践</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/07/27/X86-ShellCode-2/">X86-ShellCode编写2</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/07/27/X86-ShellCode-1/">X86-ShellCode编写1</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/07/26/CVE-2017-17215-拓展/">CVE-2017-17215 拓展</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="https://yan-1-20.github.io/about/" title="Asprose" target="_blank">Asprose</a><ul></ul><a href="https://www.lucifaer.com/" title="Lucifaer" target="_blank">Lucifaer</a><ul></ul><a href="http://drac0nids.top/" title="Drac0nids" target="_blank">Drac0nids</a><ul></ul><a href="http://balis0ng.com/" title="balis0ng" target="_blank">balis0ng</a><ul></ul><a href="https://da7uran0ir.github.io/" title="Da7ura_n0ir" target="_blank">Da7ura_n0ir</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer"> Dad ， I will always love you.</div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=0.0.0" async></script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.0" async></script><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.css"><script type="text/javascript" color="255,0,0" opacity="0.7" zIndex="-1" count="100" src="//cdn.bootcss.com/canvas-nest.js/1.0.1/canvas-nest.min.js"></script><script type="text/javascript" src="/js/codeblock-resizer.js?v=0.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=0.0.0"></script></div></body></html>
