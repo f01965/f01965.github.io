@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="“一个不像二进制同学的博客。”"><title>fuzz修改 | f01965</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=0.0.0"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/normalize/8.0.0/normalize.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/pure-min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/grids-responsive-min.css"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = 'https://hm.baidu.com/hm.js?' + 'true';
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+  })();
+  </script></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">fuzz修改</h1><a id="logo" href="/.">f01965</a><p class="description">初闻不知曲中意，再听已是曲中人。</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">fuzz修改</h1><div class="post-meta">Aug 17, 2022<script src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js" async></script><span id="busuanzi_container_page_pv"> | <span id="busuanzi_value_page_pv"></span><span> 阅读</span></span></div><a class="disqus-comment-count" href="/2022/08/17/fuzz修改/#vcomment"><span class="valine-comment-count" data-xid="/2022/08/17/fuzz修改/"></span><span> 条评论</span></a><div class="post-content"><h1><span id="修改-winafl-afl-fuzz-网络服务程序">修改 winAFL - AFL fuzz 网络服务程序</span></h1><ul>
+<li><p>winAFL 提供的黑盒的 fuzz ，结合它的 custom_net_fuzzer 可以 fuzz 网络服务程序。</p>
+</li>
+<li><p>AFL 主要是 fuzz 开源的，对于黑盒采用的是 qemu 模式。</p>
+</li>
+</ul>
+<p>我的需求是能在目标设备上运行，目标设置指一些网络设备，底层是 Linux 的系统。而且，这些设备的服务程序，依赖硬件支持，很难在外面的虚拟环境中模拟起来。不像是一些小型的路由器，httpsd 服务可以用 qemu 模拟。</p>
+<p>这里，我主要是使用 winAFL 的代码，将所有功能用 Linux C 重写。</p>
+<p>winAFL 里对覆盖率的获取使用了 DynamoRIO ，这个工具有 Linux 版本，拿过来用就可以。</p>
+<h4><span id="liblinuxaflso">liblinuxafl.so</span></h4><p>核心的 winafl.dll ，这个代码需要大改。windows 上对于程序的异常状态，有处理异常相关的函数来进行。Linux 上的异常主要是信号，同样的也有相对于的信号处理函数。</p>
+<p>winafl.dll 最终改成 liblinuxafl.so 。用测试模式，在目标设备的环境下用测试模式运行一下，如下图。</p>
+<p><img src="1.png" alt=""></p>
+<p>这说明，修改后的 liblinuxafl.so 功能是正确的。 </p>
+<p>再来跑一下覆盖率，用 IDA 安装上插件  lighthouse ，把覆盖率文件导入进去，如图。</p>
+<p><img src="0.png" alt=""></p>
+<h2><span id="fuzz-主体程序修改">fuzz 主体程序修改</span></h2><h4><span id="afl">afl</span></h4><p>fuzz 的主体程序，改动的地方也不少。主要是通信的问题。</p>
+<p>阅读 afl 的源码，可以知道它的通信采用了 pipe ，进行匿名管道通信。因为，它没有借助外面的程序来做覆盖率的计算。afl-fuzz 首先 fork 一个 server ，然后从 server 端再次 fork 子程序， server 和子进程通信。</p>
+<p>linux 下的 pipe 是半双工的，所以创建了 2 个 pipe。 对于进程异常的处理，用 waitpid 来做。具体的状态交给 WIFSIGNALED，WEXITSTATUS 等来处理。</p>
+<p><img src="4.png" alt=""></p>
+<h4><span id="winafl">winafl</span></h4><p>winafl 则是采用了 Createprocess ，通信使用了 CreateNamedPipe 。因为 winafl 调用了 DynamoRIO 来计算覆盖率，通信是跨进程的，所以创建命名管道来通信。与 linux 最大的不同就是 windows 下的管道可以是全双工的。</p>
+<p>子进程的状态监控由 winafl.dll 代码的来实现，它调用了 DynamoRIO 提供的 API，当出现崩溃时就向管道写入字符 ‘C’，并把错误的消息也写入管道。</p>
+<p><img src="2.png" alt=""></p>
+<p>然后主进程读取管道的数据，如果是 ‘C’ 的话，就读出异常消息，杀死崩溃的进程，返回 crash。</p>
+<p><img src="3.png" alt=""></p>
+<h4><span id="fuzz">fuzz</span></h4><p>由于我的程序要在 linux 上跑，所以没有全双工的管道。那么，跨进程通信我只能用命名管道。我这里只使用了一个命名管道，主要用来处理崩溃。</p>
+<p><img src="5.png" alt=""></p>
+<p>当进程异常时，也需要使用 waitpid 对进程进行处理。虽然我也用了 DynamroRIO 来获取进程的状态。但是，子进程崩溃了并不会自己退出，还是需要我去处理错误，回收资源。不然它就是一个僵尸进程，一直在那挂着。</p>
+<h2><span id="测试">测试</span></h2><p>最后我写了一个带2处不同崩溃网络测试程序，来试试我改完的这个fuzz。</p>
+<p><img src="6.png" alt=""></p>
+<p>可以跑出崩溃，就是效率不高。多次反复测试，得到的 crash 样本都是信号 11 ，说明 crash 也是正确抓到了的。</p>
+<p><img src="7.png" alt=""></p>
+</div><iframe src="/donate/?AliPayQR=null&amp;WeChatQR=/img/mePic.jpg&amp;GitHub=null&amp;BTCQR=null&amp;BTCKEY=null&amp;PayPal=null" style="overflow-x:hidden; overflow-y:hidden; border:0xp none #fff; min-height:240px; width:100%;" frameborder="0" scrolling="no"></iframe><div class="tags"><a href="/tags/fuzz/">fuzz</a></div><div class="post-nav"><a class="pre" href="/2022/08/17/winafl-net/">winafl-net</a><a class="next" href="/2022/07/30/730/">730</a></div><div id="vcomment"></div><script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'o3qEIvAEzJfA0jPzjvyVeUwo-gzGzoHsz',
+  appKey:'VBV3VN2vtqwbGqHGFeNL86iw',
+  placeholder:'thanks for you read',
+  avatar:'mm',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.baidu.com/baidu" method="get" accept-charset="utf-8" target="_blank"><input type="search" name="word" maxlength="20" placeholder="Search"/><input type="hidden" name="si" value="https://f01965.github.io"/><input name="tn" type="hidden" value="bds"/><input name="cl" type="hidden" value="3"/><input name="ct" type="hidden" value="2097152"/><input name="s" type="hidden" value="on"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div><ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/CVE-2018/">CVE / 2018</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/技术分享/">技术分享</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/日志/">日志</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"><a href="/tags/code/" style="font-size: 15px;">code</a> <a href="/tags/漏洞利用/" style="font-size: 15px;">漏洞利用</a> <a href="/tags/CTF-web/" style="font-size: 15px;">CTF-web</a> <a href="/tags/固件/" style="font-size: 15px;">固件</a> <a href="/tags/技术分享/" style="font-size: 15px;">技术分享</a> <a href="/tags/GC/" style="font-size: 15px;">GC</a> <a href="/tags/随笔/" style="font-size: 15px;">随笔</a> <a href="/tags/Mircosoft/" style="font-size: 15px;">Mircosoft</a> <a href="/tags/漏洞分析/" style="font-size: 15px;">漏洞分析</a> <a href="/tags/fuzz/" style="font-size: 15px;">fuzz</a> <a href="/tags/技术分享-固件/" style="font-size: 15px;">技术分享/固件</a> <a href="/tags/机器学习框架/" style="font-size: 15px;">机器学习框架</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/08/17/winafl-net/">winafl-net</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/08/17/fuzz修改/">fuzz修改</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/07/30/730/">730</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/04/10/CVE-2018-5146/">CVE-2018-5146</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/02/24/2021总结/">2021总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2021/02/25/fortigate-Vulnerability/">fortigate Vulnerability</a></li><li class="post-list-item"><a class="post-list-link" href="/2021/02/23/watchguard/">watchguard</a></li><li class="post-list-item"><a class="post-list-link" href="/2021/02/18/fortigate/">fortigate</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/15/spiderMonkey-漏洞利用简介3/">spiderMonkey 漏洞利用简介3</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/11/15/spiderMonkey-漏洞利用简介2/">spiderMonkey 漏洞利用简介2</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="https://yan-1-20.github.io/about/" title="Asprose" target="_blank">Asprose</a><ul></ul><a href="https://www.lucifaer.com/" title="Lucifaer" target="_blank">Lucifaer</a><ul></ul><a href="http://drac0nids.top/" title="Drac0nids" target="_blank">Drac0nids</a><ul></ul><a href="http://balis0ng.com/" title="balis0ng" target="_blank">balis0ng</a><ul></ul><a href="https://da7uran0ir.github.io/" title="Da7ura_n0ir" target="_blank">Da7ura_n0ir</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer"> Dad ， I will always love you.</div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=0.0.0" async></script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.0" async></script><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.css"><script type="text/javascript" color="255,0,0" opacity="0.7" zIndex="-1" count="100" src="//cdn.bootcss.com/canvas-nest.js/1.0.1/canvas-nest.min.js"></script><script type="text/javascript" src="/js/codeblock-resizer.js?v=0.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=0.0.0"></script></div></body></html>
