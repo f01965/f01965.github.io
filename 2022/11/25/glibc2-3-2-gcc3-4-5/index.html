@@ -1,0 +1,286 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="“一个不像二进制同学的博客。”"><title>glibc2.3.2-gcc3.4.5 | f01965</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=0.0.0"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/normalize/8.0.0/normalize.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/pure-min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/1.0.0/grids-responsive-min.css"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = 'https://hm.baidu.com/hm.js?' + 'true';
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+  })();
+  </script></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">glibc2.3.2-gcc3.4.5</h1><a id="logo" href="/.">f01965</a><p class="description">初闻不知曲中意，再听已是曲中人。</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">glibc2.3.2-gcc3.4.5</h1><div class="post-meta">Nov 25, 2022<script src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js" async></script><span id="busuanzi_container_page_pv"> | <span id="busuanzi_value_page_pv"></span><span> 阅读</span></span></div><a class="disqus-comment-count" href="/2022/11/25/glibc2-3-2-gcc3-4-5/#vcomment"><span class="valine-comment-count" data-xid="/2022/11/25/glibc2-3-2-gcc3-4-5/"></span><span> 条评论</span></a><div class="post-content"><h1><span id="glib232-gcc345-环境搭建">glib2.3.2 - gcc3.4.5 环境搭建</span></h1><p>[toc]</p>
+<h2><span id="前言">前言</span></h2><p>目标环境设备有些年代，linux环境： gcc-3.4.3  ，glib2.3.3 ，kernel2.6.10  </p>
+<p><img src="1" alt=""></p>
+<p>glibc-2.3.3 是 2004-2005间发布的一个版本。非常的旧。所有编译过程存在很多问题。</p>
+<p>我这里并没有选择 glibc-2.3.3 ，而选择了 glibc-2.3.2。在我的编译过程中发现 glibc-2.3.3 的编译错误会更多，解决起来更麻烦。</p>
+<h2><span id="虚拟机环境">虚拟机环境</span></h2><p>需要准备两台虚拟机。具体配置如下。</p>
+<h3><span id="kali20">kali2.0</span></h3><p>kali 的环境如下。</p>
+<p><img src="2" alt=""></p>
+<p>需要注意：这里的 make 是 4.3 版本。<font color="red">我是root用户，这点很重要，后续编译有个报错，其实就是需要root用户的权限</font></p>
+<p>源</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">deb http://mirrors.aliyun.com/kali kali-rolling main non-free contrib</span><br><span class="line">deb-src http://mirrors.aliyun.com/kali kali-rolling main non-free contrib</span><br></pre></td></tr></table></figure>
+<h3><span id="ubuntu12-32bit">ubuntu12 - 32bit</span></h3><p>ubuntu环境如下。</p>
+<p><img src="3" alt=""></p>
+<p>make版本是 3.81</p>
+<p>源</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse </span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse </span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-updates main restricted universe multiverse </span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-proposed main restricted universe multiverse </span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted universe multiverse </span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse </span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse </span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-updates main restricted universe multiverse </span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-proposed main restricted universe multiverse </span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted universe multiverse</span><br></pre></td></tr></table></figure>
+<p>这里没有说 kali 与 ubuntu 需要安装的包，在编译过程种遇到缺少什么包，就安装即可。这些包没有特殊之处。注意自己换一下国内源，上面给出了。</p>
+<h2><span id="编译过程具体步骤">编译过程具体步骤</span></h2><p>首先下载需要的源码。</p>
+<p>linux-2.6.10.tar.bz2：<a href="https://mirrors.edge.kernel.org/pub/linux/kernel/v2.6/" target="_blank" rel="noopener">https://mirrors.edge.kernel.org/pub/linux/kernel/v2.6/</a></p>
+<p>binutils-2.15.tar.bz2： <a href="https://ftp.gnu.org/gnu/binutils/" target="_blank" rel="noopener">https://ftp.gnu.org/gnu/binutils/</a></p>
+<p>binutils-2.23.tar.bz2： <a href="https://ftp.gnu.org/gnu/binutils/" target="_blank" rel="noopener">https://ftp.gnu.org/gnu/binutils/</a></p>
+<p>gcc-3.4.5.tar.bz2：<a href="https://ftp.gnu.org/gnu/gcc/gcc-3.4.5/" target="_blank" rel="noopener">https://ftp.gnu.org/gnu/gcc/gcc-3.4.5/</a></p>
+<p>glibc-2.3.2.tar.bz2：<a href="https://ftp.gnu.org/gnu/glibc/" target="_blank" rel="noopener">https://ftp.gnu.org/gnu/glibc/</a></p>
+<p>glibc 补丁：<a href="https://www.linuxfromscratch.org/patches/downloads/glibc/" target="_blank" rel="noopener">https://www.linuxfromscratch.org/patches/downloads/glibc/</a></p>
+<p>glibc的补丁就下载  2.3.2 版本的补丁。后续还有补丁我会提到。</p>
+<p>记得还要下载 glibc-linuxthreads-2.3.2.tar.bz2 ：<a href="https://ftp.gnu.org/gnu/glibc/" target="_blank" rel="noopener">https://ftp.gnu.org/gnu/glibc/</a></p>
+<h3><span id="1-kali20">1    kali2.0</span></h3><p>无论是 kail 还是 ubuntu 下，都首先要进行如下操作。</p>
+<p>在桌面上创建 ppc 文件夹</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir ppc</span><br></pre></td></tr></table></figure>
+<p>在 ppc 里面创建如下一些文件夹</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd ppc</span><br><span class="line">mkdir build-tools kernel tools</span><br></pre></td></tr></table></figure>
+<p>build-tools：存放 gcc glibc binutils 的源码 ，<strong>下载好的 gcc glibc binutils 的源码以及补丁这些，全放在该目录下</strong></p>
+<p>kernel：用来放内核，下载的所有文件中，<strong>只有 linux-2.6.10.tar.bz2 放在该目录</strong>。</p>
+<p>tools：最后编译好的工具存放在这，这是空目录。</p>
+<p>进入 build-tools 目录，再次创建一些文件夹</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd build-tools</span><br><span class="line">mkdir build-binutils build-boot-gcc build-gcc build-glibc gcc-patch</span><br></pre></td></tr></table></figure>
+<p>build-binutils ：用来编译 binutils</p>
+<p>build-boot-gcc：用来编译临时的 gcc</p>
+<p>build-gcc：用来编译最后和 glibc关联起来的 gcc</p>
+<p>build-glibc：用来编译 glibc</p>
+<p>gcc-patch：放 gcc 的补丁</p>
+<p>然后，在当前 bash 窗口下设置环境变量，后续的所有操作都在这一个 bash 窗口下进行。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> PRJECT=ppc</span><br><span class="line"><span class="built_in">export</span> PRJROOT=/root/Desktop/<span class="variable">$&#123;PRJECT&#125;</span></span><br><span class="line"><span class="built_in">export</span> TARGET=powerpc-linux-gnu</span><br><span class="line"><span class="built_in">export</span> PREFIX=<span class="variable">$&#123;PRJROOT&#125;</span>/tools</span><br><span class="line"><span class="built_in">export</span> TARGET_PREFIX=<span class="variable">$&#123;PREFIX&#125;</span>/<span class="variable">$&#123;TARGET&#125;</span></span><br><span class="line"><span class="built_in">export</span> PATH=<span class="variable">$&#123;PREFIX&#125;</span>/bin:<span class="variable">$&#123;PATH&#125;</span></span><br></pre></td></tr></table></figure>
+<p>注意这里的路径设置 <strong>PRJROOT=/root/Desktop/</strong>，这是我的环境路径，根据情况要自行更改。</p>
+<h4><span id="11-linux-2610tarbz2">1.1    linux-2.6.10.tar.bz2</span></h4><p>首先去 kernel 下，解压 linux-2.6.10.tar.bz2</p>
+<p><img src="4" alt=""></p>
+<p>进入linux-2.6.10</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> linux-2.6.10</span><br></pre></td></tr></table></figure>
+<p>执行如下命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make ARCH=ppc CROSS_COMPILE=powerpc-linux-gnu- menuconfig</span><br><span class="line">进入到 menuconfig 界面，直接保存一下，什么都不用配置，退出就可以。</span><br></pre></td></tr></table></figure>
+<p>这一步的命令，目的是生成对应架构的内核头文件。若这一步没有问题，那么在  <strong>/ppc/kernel/linux-2.6.10/include/linux/</strong> 目录下，可以看到有个 <strong>version.h</strong> 文件，内容如下。</p>
+<p><img src="5" alt=""></p>
+<p>如果，操作完之后，发现没有生成 version.h。那么，你再次执行一下make命令。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make </span><br><span class="line"><span class="comment"># 执行 make 会报错，但没有关系，只需要关心 version.h 是否生成了</span></span><br></pre></td></tr></table></figure>
+<p>接着创建文件夹。这一步用来生成存放内核头文件的目录，操作成功递归创建如下的目录：<strong>/ppc/tools/powerpc-linux-gnu/include/</strong> </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p <span class="variable">$TARGET_PREFIX</span>/include</span><br></pre></td></tr></table></figure>
+<p>然后，创建软连接，链接内核头文件到 <strong>/ppc/tools/powerpc-linux-gnu/include/</strong>  目录下。</p>
+<p>命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ln -s <span class="variable">$PRJROOT</span>/kernel/linux-2.6.10/include/linux <span class="variable">$TARGET_PREFIX</span>/include/linux</span><br><span class="line"></span><br><span class="line">ln -s <span class="variable">$PRJROOT</span>/kernel/linux-2.6.10/include/asm-ppc <span class="variable">$TARGET_PREFIX</span>/include/asm</span><br><span class="line"></span><br><span class="line">ln -s <span class="variable">$PRJROOT</span>/kernel/linux-2.6.10/include/asm-generic <span class="variable">$TARGET_PREFIX</span>/include/asm-generic</span><br></pre></td></tr></table></figure>
+<p>kernel的操作，到处结束。</p>
+<p><img src="6" alt=""></p>
+<p>注意的点：</p>
+<ul>
+<li><p>在环境变量设置正确的情况下，上面使用命令的操作过程中，只能可能在执行 <strong>make ARCH=ppc CROSS_COMPILE=powerpc-linux-gnu- menuconfig</strong>  命令时，会出现失败的情况。</p>
+<ul>
+<li>一般是缺少库文件。缺少库文件，就去安装。具体安装什么，谷歌即可解决问题。</li>
+<li>另外，就是权限问题。那么把自己切换成 root 即可。</li>
+</ul>
+</li>
+<li><p>我的 kali 机器开启了 root 用户，我就是用root用户登录的。所以，上述的所有操作都在 root 权限下进行的。之所以提到权限的问题，是因为后续的 ubuntu 配置的时候，会遇到一些奇怪的报错，有时候就是权限的问题。</p>
+</li>
+</ul>
+<h4><span id="12-binutils-215tarbz2">1.2    binutils-2.15.tar.bz2</span></h4><p>这一步来编译 binutil 工具。首先，进入 build-tools ，解压 binutils-2.15.tar.bz2。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span>  build-tools</span><br><span class="line">tar -jxvf binutils-2.15.tar.bz2</span><br></pre></td></tr></table></figure>
+<p>然后进入build-binutils目录配置和编译binutils。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> build-binutils</span><br><span class="line">../binutils-2.15/configure  --target=<span class="variable">$TARGET</span> --prefix=<span class="variable">$PREFIX</span></span><br></pre></td></tr></table></figure>
+<p>然后安装</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+<p>make 中如果出现错误，一般也是缺包。缺什么安装什么。举个列子：</p>
+<p><img src="7" alt=""></p>
+<p>缺少 lex ，安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install flex</span><br></pre></td></tr></table></figure>
+<p>成功后在 <strong>/ppc/tools/bin/</strong> 下，就能看到编译的 binutil 工具。</p>
+<p><img src="8" alt=""></p>
+<p>编译 binutils 一般不会出现错误。说明这个工具的兼容性是非常不错的。我编译了无数次，没有遇到这个工具出错。错误全在 gcc 和 glibc 的编译阶段，后面都会提到。</p>
+<h4><span id="13-gcc-345tarbz2">1.3    gcc-3.4.5.tar.bz2</span></h4><p>从编译 gcc 开始就会有各种稀奇古怪的错了。下面一步一步来。</p>
+<p>首先，还是解压。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span>  build-tools</span><br><span class="line">tar -jxvf gcc-3.4.5.tar.bz2</span><br></pre></td></tr></table></figure>
+<p>gcc 不要打补丁，接着切换目录到 build-boot-gcc</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> build-boot-gcc</span><br></pre></td></tr></table></figure>
+<p>然后编译 gcc ，命令如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">../gcc-3.4.5/configure --target=<span class="variable">$TARGET</span> --prefix=<span class="variable">$PREFIX</span> --<span class="built_in">disable</span>-shared --without-headers --with-newlib --<span class="built_in">enable</span>-languages=c --<span class="built_in">disable</span>-decimal-float --<span class="built_in">disable</span>-libgomp --<span class="built_in">disable</span>-libmudflap --<span class="built_in">disable</span>-libssp --<span class="built_in">disable</span>-threads --<span class="built_in">disable</span>-multilib --<span class="built_in">disable</span>-werror</span><br></pre></td></tr></table></figure>
+<p>这一步的命令非常关键，不能多不能少，一个参数都不要改。</p>
+<p>不出意外的情况下，gcc 会编译成功。然后安装。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+<p>成功的话如下：</p>
+<p><img src="9" alt=""></p>
+<font color="red"><strong>题外话：</strong></font>
+
+<p><strong>这里的操作，只适合编译 gcc 4.0 及其以下的版本。若，你要编译 4.1 及以上的版本，还要在添加 gmp ，mpc，mpfr 的代码</strong></p>
+<p>gmp：<a href="https://ftp.gnu.org/gnu/gmp/" target="_blank" rel="noopener">https://ftp.gnu.org/gnu/gmp/</a></p>
+<p>mpc：<a href="https://ftp.gnu.org/gnu/mpc/" target="_blank" rel="noopener">https://ftp.gnu.org/gnu/mpc/</a></p>
+<p>mpfr：<a href="https://ftp.gnu.org/gnu/mpfr/" target="_blank" rel="noopener">https://ftp.gnu.org/gnu/mpfr/</a></p>
+<p>但是，要选择合适的 gmp，mpc，mpfr 版本。那么，哪些是合适的，我没有一一测试过。我只编译过 gcc-4.7.3，我这里给出我编译 gcc-4.7.3对应的版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gmp-5.0.2</span><br><span class="line">mpc-1.1.0 </span><br><span class="line">mpfr-4.0.2</span><br></pre></td></tr></table></figure>
+<p>具体操作，将上述3个源代码解压，然后移动到 gcc 源码目录下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">build-boot-gcc]$ mv gmp-5.0.2 ./gcc-4.7.3/gmp</span><br><span class="line">build-boot-gcc]$ mv mpc-1.1.0 ./gcc-4.7.3/mpc</span><br><span class="line">build-boot-gcc]$ mv mpfr-4.0.2 ./gcc-4.7.3/mpfr</span><br></pre></td></tr></table></figure>
+<p>然后使用相同的命令进行配置 configure，然后安装。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">build-boot-gcc]$ ../gcc-4.7.3/configure --target=<span class="variable">$TARGET</span> --prefix=<span class="variable">$PREFIX</span> --<span class="built_in">disable</span>-shared --without-headers --with-newlib --<span class="built_in">enable</span>-languages=c --<span class="built_in">disable</span>-decimal-float --<span class="built_in">disable</span>-libgomp --<span class="built_in">disable</span>-libmudflap --<span class="built_in">disable</span>-libssp --<span class="built_in">disable</span>-threads --<span class="built_in">disable</span>-multilib --<span class="built_in">disable</span>-werror</span><br><span class="line">build-boot-gcc]$ make all-gcc</span><br><span class="line">build-boot-gcc]$ make all-target-libgcc</span><br><span class="line">build-boot-gcc]$ make install-gcc</span><br><span class="line">build-boot-gcc]$ make install-target-libgcc</span><br></pre></td></tr></table></figure>
+<h4><span id="14-glibc-232tarbz2">1.4     glibc-2.3.2.tar.bz2</span></h4><p>编译 glibc 是问题最对的。首先，还是解压。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> build-tools</span><br><span class="line">tar -jxvf glibc-2.3.2.tar.bz2</span><br></pre></td></tr></table></figure>
+<p>gclibc 有错，需要打补丁，所以这一步先打个补丁。</p>
+<p>之前下载的补丁有：</p>
+<ul>
+<li>glibc-2.3.2-inlining_fixes-2.patch</li>
+<li>glibc-2.3.2-sscanf-1.patch</li>
+<li>glibc-2.3.2-test_lfs-1.patch</li>
+</ul>
+<p>打上补丁</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> glibc-2.3.2</span><br><span class="line">patch -p1 &lt; ../gcc-patch/glibc-2.3.2-inlining_fixes-2.patch</span><br><span class="line">patch -p1 &lt; ../gcc-patch/glibc-2.3.2-sscanf-1.patch</span><br><span class="line">patch -p1 &lt; ../gcc-patch/glibc-2.3.2-test_lfs-1.patch</span><br></pre></td></tr></table></figure>
+<p>接着，解压 <strong>glibc-linuxthreads-2.3.2.tar.bz2</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> build-tools</span><br><span class="line">tar -jxvf glibc-linuxthreads-2.3.2.tar.bz2</span><br></pre></td></tr></table></figure>
+<p>把解压出来的 <strong>linuxthreads，linuxthreads_db</strong> 移动到   glibc-2.3.2 的目录下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mv linuxthreads glibc-2.3.2</span><br><span class="line">mv linuxthreads_db  glibc-2.3.2</span><br></pre></td></tr></table></figure>
+<p>然后切换目录到 <strong>build-glibc</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> build-glibc</span><br></pre></td></tr></table></figure>
+<p>配置 configure</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CC=powerpc-linux-gnu-gcc ../glibc-2.3.2/configure --host=<span class="variable">$TARGET</span> --prefix=<span class="variable">$PREFIX</span>  --<span class="built_in">enable</span>-add-ons --with-headers=<span class="variable">$TARGET_PREFIX</span>/include libc_cv_forced_unwind=yes libc_cv_c_cleanup=yes libc_cv_arm_tls=yes --<span class="built_in">disable</span>-werror</span><br></pre></td></tr></table></figure>
+<p>这里，会报告一个错误，说 make 版本太旧。解决办法：</p>
+<ol>
+<li><p>用编辑器打开 <strong>glibc-2.3.2/configure</strong> 文件，我在kali上装了 010editor ，所以我用的 010editor 打开它。</p>
+</li>
+<li><p>搜索关键字  <strong>3.[89]</strong> ，如图。</p>
+<p><img src="10" alt=""></p>
+<p>这里是校验 make 版本的，给它改了，改为：<strong>3.[89]*|4.*)</strong></p>
+<p><img src="11" alt=""></p>
+</li>
+</ol>
+<p>修改完，保存。</p>
+<p>切换到 <strong>build-glibc</strong> ，继续 make。</p>
+<p>接着会遇到第二个错误，如图。</p>
+<p><img src="12" alt=""></p>
+<p>它是说 <strong>version-info.h</strong> 缺少双引号，解决办法：</p>
+<ul>
+<li><p>找到  <strong>/root/Desktop/ppc/build-tools/build-glibc/csu/version-info.h</strong> 文件，编辑它。</p>
+<p><img src="13" alt=""></p>
+</li>
+<li><p>它第1-4行都缺一个双引号，给他加上就行。</p>
+<p><img src="14" alt=""></p>
+</li>
+</ul>
+<p>保存之后，继续执行 make。</p>
+<p>这个时候，会遇到一个很奇怪的错误。如下图。</p>
+<p><img src="15" alt=""></p>
+<font color="red"><strong>这个错误，产生的原因是 make 版本导致的。当前的 kali 下，我的 make 是 4.3 版本。如果使用 3 点几版本的 make 就不会有这个错误。但是，我尝试过编译 3.79，3.80，3.81，3.82 这 4 个版本的 make 来替换当前系统的。这会产生新的错误。 </strong></font> 所以，我不建议你替换 make 去这样做。 那么，到此我们 kali 的操作到这里就停止。<br><br>我们去 ubuntu12 下，编译出这个 <strong>stamp.o</strong> ，然后移植到 kali 下。<br><br><strong>kali 下这个 bash 窗口不要关掉，当我们从 Ubuntu 下把  stamp.o 拷贝到这里之后，需要继续执行 make。</strong><br><br><br><br>### 2 ubuntu 12 - 32bit<br><br>这里切换到 ubuntu 来操作了。<br><br>同样的步骤，首先创建 pcc 目录，以及需要的目录。然后，设置环境变量<br><br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> PRJECT=ppc</span><br><span class="line"><span class="built_in">export</span> PRJROOT=/home/pc/Desktop/<span class="variable">$&#123;PRJECT&#125;</span></span><br><span class="line"><span class="built_in">export</span> TARGET=powerpc-linux-gnu</span><br><span class="line"><span class="built_in">export</span> PREFIX=<span class="variable">$&#123;PRJROOT&#125;</span>/tools</span><br><span class="line"><span class="built_in">export</span> TARGET_PREFIX=<span class="variable">$&#123;PREFIX&#125;</span>/<span class="variable">$&#123;TARGET&#125;</span></span><br><span class="line"><span class="built_in">export</span> PATH=<span class="variable">$&#123;PREFIX&#125;</span>/bin:<span class="variable">$&#123;PATH&#125;</span></span><br></pre></td></tr></table></figure><br><br><font color="red">注意，ubuntu 下编译的 binutil 工具，选择的版本是 <strong>binutils-2.23.tar.bz2 </strong></font>
+
+<p>因为，选择低版本的 binutils 时，在编译后续的 gcc 会报错。错误是说：ar 工具会导致缓冲区泄漏。</p>
+<p>所以，需要选择高版本的 binutils。</p>
+<h4><span id="21-kernel">2.1    kernel</span></h4><p>还是先编译 Kernel。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> kernel</span><br><span class="line">tar -jxvf linux-2.6.10.tar.bz2</span><br><span class="line"><span class="built_in">cd</span> linux-2.6.10/</span><br><span class="line">make ARCH=ppc CROSS_COMPILE=powerpc-linux-gnu- menuconfig</span><br><span class="line">make <span class="comment"># 再次make一下 ，生成version.h</span></span><br></pre></td></tr></table></figure>
+<p>创建头文件的软链接</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p <span class="variable">$TARGET_PREFIX</span>/include</span><br><span class="line"></span><br><span class="line">ln -s <span class="variable">$PRJROOT</span>/kernel/linux-2.6.10/include/linux <span class="variable">$TARGET_PREFIX</span>/include/linux</span><br><span class="line"></span><br><span class="line">ln -s <span class="variable">$PRJROOT</span>/kernel/linux-2.6.10/include/asm-ppc <span class="variable">$TARGET_PREFIX</span>/include/asm</span><br><span class="line"></span><br><span class="line">ln -s <span class="variable">$PRJROOT</span>/kernel/linux-2.6.10/include/asm-generic <span class="variable">$TARGET_PREFIX</span>/include/asm-generic</span><br></pre></td></tr></table></figure>
+<h4><span id="22-binutils-223tarbz2">2.2    binutils-2.23.tar.bz2</span></h4><p>切换目录，编译 binutil 工具。具体操作与 kali 下一样。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> build-tools</span><br><span class="line">tar -jxvf binutils-2.23.tar.bz2</span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> build-binutils/</span><br><span class="line">../binutils-2.23/configure  --target=<span class="variable">$TARGET</span> --prefix=<span class="variable">$PREFIX</span></span><br><span class="line">make </span><br><span class="line">make install <span class="comment"># 如果安装这里出错，就用 sudo make install ，管理员权限</span></span><br></pre></td></tr></table></figure>
+<p>make途中遇到报错，说缺少 lex 包。安装一下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install flex</span><br></pre></td></tr></table></figure>
+<p>安装时遇到如下：</p>
+<p><img src="16" alt=""></p>
+<p>保持默认选择，no 就行。接着出现下一个界面就选 ok。</p>
+<p>最后工具如下。</p>
+<p><img src="17" alt=""></p>
+<h4><span id="23-gcc-345tarbz2">2.3    gcc-3.4.5.tar.bz2</span></h4><p>编译gcc</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> build-tools</span><br><span class="line">tar -jxvf gcc-3.4.5.tar.bz2</span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> build-boot-gcc/</span><br><span class="line"></span><br><span class="line">../gcc-3.4.5/configure --target=<span class="variable">$TARGET</span> --prefix=<span class="variable">$PREFIX</span> --<span class="built_in">disable</span>-shared --without-headers --with-newlib --<span class="built_in">enable</span>-languages=c --<span class="built_in">disable</span>-decimal-float --<span class="built_in">disable</span>-libgomp --<span class="built_in">disable</span>-libmudflap --<span class="built_in">disable</span>-libssp --<span class="built_in">disable</span>-threads --<span class="built_in">disable</span>-multilib --<span class="built_in">disable</span>-werror</span><br><span class="line"></span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+<p>遇到一个错误：</p>
+<p><img src="18" alt=""></p>
+<p>这实际上是权限不够。不过，这里不需要切换成root用户去做。我们去修改源文件。</p>
+<ol>
+<li><p>找到文件 <strong>gcc-3.4.5/gcc/collect2.c</strong> ，编辑它。</p>
+</li>
+<li><p>全文搜索关键字 <strong>O_CREAT</strong> ，找到如下位置。</p>
+<p><img src="19" alt=""></p>
+</li>
+<li><p>在后面添加 <strong>, 0755</strong>  ，如图。</p>
+<p><img src="20" alt=""></p>
+</li>
+</ol>
+<p>完成之后如图。</p>
+<p><img src="21" alt=""></p>
+<h4><span id="24-glibc-232tarbz2">2.4    glibc-2.3.2.tar.bz2</span></h4><p>编译glibc</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> build-tools</span><br><span class="line">tar -jxvf glibc-2.3.2.tar.bz2</span><br><span class="line"></span><br><span class="line"><span class="comment"># 打补丁</span></span><br><span class="line"><span class="built_in">cd</span> glibc-2.3.2/</span><br><span class="line">patch -p1 &lt; ../gcc-patch/glibc-2.3.2-sscanf-1.patch </span><br><span class="line"><span class="comment"># 这里可能会报错，说 patch 这个程序没有安装， sudo apt-get install patch</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 移动 linuxthreads</span></span><br><span class="line"><span class="built_in">cd</span> build-tools</span><br><span class="line">tar -jxvf glibc-linuxthreads-2.3.2.tar.bz2</span><br><span class="line">mv linuxthreads glibc-2.3.2</span><br><span class="line">mv linuxthreads_db  glibc-2.3.2</span><br><span class="line"></span><br><span class="line"><span class="comment"># 编译</span></span><br><span class="line"><span class="built_in">cd</span> build-glibc</span><br><span class="line"></span><br><span class="line">CC=powerpc-linux-gnu-gcc ../glibc-2.3.2/configure --build=<span class="variable">$TARGET</span> --prefix=<span class="variable">$PREFIX</span> --<span class="built_in">enable</span>-add-ons=linuxthreads --with-headers=<span class="variable">$TARGET_PREFIX</span>/include --<span class="built_in">disable</span>-profile libc_cv_forced_unwind=yes libc_cv_c_cleanup=yes --without-cvs --with-tls --<span class="built_in">enable</span>-threads</span><br><span class="line"></span><br><span class="line">make </span><br><span class="line"><span class="comment"># make 的时候也会遇到与 kali 相同的问题</span></span><br><span class="line"><span class="comment"># 解决方式一样，修改： /home/pc/Desktop/ppc/build-tools/build-glibc/csu/version-info.h</span></span><br><span class="line"><span class="comment"># 添加上双引号</span></span><br></pre></td></tr></table></figure>
+<p>make 遇到的第二个问题，如图。</p>
+<p><img src="22" alt=""></p>
+<p>这个是源代码的错误。而且后续 sock 模块下好几个文件都有这个错误。下面直接说如何解决。</p>
+<ul>
+<li><ol>
+<li>找到文件：<strong>/glibc-2.3.2/sysdeps/unix/sysv/linux/bind.S</strong>  ，如图。</li>
+</ol>
+<p><img src="23" alt=""></p>
+<p>注释掉第一行，如图。</p>
+<p><img src="24" alt=""></p>
+</li>
+<li><ol start="2">
+<li>找到文件：<strong>/glibc-2.3.2/sysdeps/unix/sysv/linux/listend.S</strong> ，注释掉第一行。</li>
+</ol>
+<p><img src="25" alt=""></p>
+</li>
+<li><ol start="3">
+<li>找到文件：<strong>/glibc-2.3.2/sysdeps/unix/sysv/linux/getsockname.S</strong> ，注释掉第一行。</li>
+</ol>
+<p><img src="26" alt=""></p>
+</li>
+<li><ol start="4">
+<li>找到文件：<strong>/glibc-2.3.2/sysdeps/unix/sysv/linux/setsockopt.S</strong> ，注释掉第一行。</li>
+</ol>
+<p><img src="27" alt=""></p>
+</li>
+</ul>
+<p>修改完之后，记得保存。然后继续执行 make。</p>
+<p>稍微等待一段时间，会再次报错，如下图。</p>
+<p><img src="28" alt=""></p>
+<p>这个错误，我没有找到具体的原因。我猜测还是 make 版本的原因。</p>
+<p>我没有找到没有解决办法，当然也不需要解决。</p>
+<p>因为，我们在 ubuntu 上进行编译的目的是获得 <font color="red">/build-tools/build-glibc/manual/stamp.o</font></p>
+<p>此时，查看一下是否生成了 <strong>/build-tools/build-glibc/manual/stamp.o</strong> ，如图。</p>
+<p><img src="29" alt=""></p>
+<p>从图上看到，已经生成了。那么，把 manual 目录打包，然后拷贝出来，放到 kali 的   <strong>/build-tools/build-glibc/</strong> 下。</p>
+<h3><span id="3-kali">3    kali</span></h3><p>继续回到kali来操作</p>
+<p>去 kali 下看看，记得位置放在：<strong>/ppc/build-tools/build-glibc</strong></p>
+<p><img src="30" alt=""></p>
+<p>然后解压一下。</p>
+<p><img src="31" alt=""></p>
+<p>然后，回到刚刚的没有关掉的 bash 窗口，如图。</p>
+<p><img src="15" alt=""></p>
+<p>继续执行 make。会继续抱一个错误，说找不到 <strong>stamp.op</strong></p>
+<p><img src="32" alt=""></p>
+<p>那么，这个错误也好解决，复制一份 stamp.o ，并且改名未 stamp.op 即可。</p>
+<p>如图。</p>
+<p><img src="33" alt=""></p>
+<p>然后继续执行 make ，不出意外应该就成功编译出 glibc 库了。如图。</p>
+<p><img src="34" alt=""></p>
+<p>然后进行安装，命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make install_root=<span class="variable">$TARGET_PREFIX</span> prefix=<span class="string">""</span> install</span><br></pre></td></tr></table></figure>
+<p>如图。</p>
+<p><img src="35" alt=""></p>
+<h3><span id="4-编译完整的gcc">4    编译完整的gcc</span></h3><p>这次我们需要编译带了 glibc2.3.2 库的 gcc。</p>
+<p>首先，需要修改 <strong>/ppc/tools/powerpc-linux-gnu/lib/</strong>  库中的 <strong>/ppc/tools/powerpc-linux-gnu/lib/libc.so </strong>文件。用编辑器打开它，如图。</p>
+<p><img src="36" alt=""></p>
+<p>将：GROUP ( /lib/libc.so.6 /lib/libc_nonshared.a )</p>
+<p>修改为：GROUP ( libc.so.6 libc_nonshared.a )</p>
+<p>目的是不让它使用系统的库，因为我们这是交叉编译环境。它应该去找当前目录下的库就才对。</p>
+<p>修改完记得保存，然后切换目录到：<strong>/ppc/build-tools/build-gcc/</strong></p>
+<p>在编译 <strong>build-boot-gcc</strong> 的时候，我们只支持了C。到此，要建立全套编译器，来支持 C 和 C++。<br>关键参数：–enable-languages=c,c++ </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> build-gcc</span><br><span class="line">../gcc-3.4.5/configure --target=<span class="variable">$TARGET</span> --prefix=<span class="variable">$PREFIX</span> --<span class="built_in">enable</span>-languages=c,c++</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+<p>make 成功如图。</p>
+<p><img src="37" alt=""></p>
+<p>make install 成功如图。</p>
+<p><img src="38" alt=""></p>
+<h2><span id="测试">测试</span></h2><p>编译好了之后，随便写个代码测试一下。</p>
+<p><img src="39" alt=""></p>
+<h2><span id="5-others">5     others</span></h2><p>细心的朋友，可能发现了一个问题，那就是 <strong>stamp.o，stamp.op，stamp.os，stamp.oS</strong> ，它们 4 个实际上是空文件。并没有内容。我不知道，是否我们可以手动创建这 4 个文件，也能编译通过。理论上应该是可以的。但，我没有再去尝试。</p>
+<p>从开始编译的时候，遇到这个报错，我并不清楚这几个文件是什么情况，可能是存在关键的数据的。所以，如果手动创建它们也能通过编译的话，回头来看我们搭建 ubuntu 来获得这个几个文件的操作，似乎有点愚蠢。当然，这也是我最后编译成功后得到的结论。</p>
+</div><iframe src="/donate/?AliPayQR=null&amp;WeChatQR=/img/mePic.jpg&amp;GitHub=null&amp;BTCQR=null&amp;BTCKEY=null&amp;PayPal=null" style="overflow-x:hidden; overflow-y:hidden; border:0xp none #fff; min-height:240px; width:100%;" frameborder="0" scrolling="no"></iframe><div class="tags"><a href="/tags/技术分享/">技术分享</a></div><div class="post-nav"><a class="next" href="/2022/08/20/Crack-a-software/">Crack a software</a></div><div id="vcomment"></div><script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script><script src="//unpkg.com/valine@latest/dist/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'o3qEIvAEzJfA0jPzjvyVeUwo-gzGzoHsz',
+  appKey:'VBV3VN2vtqwbGqHGFeNL86iw',
+  placeholder:'thanks for you read',
+  avatar:'mm',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.baidu.com/baidu" method="get" accept-charset="utf-8" target="_blank"><input type="search" name="word" maxlength="20" placeholder="Search"/><input type="hidden" name="si" value="https://f01965.github.io"/><input name="tn" type="hidden" value="bds"/><input name="cl" type="hidden" value="3"/><input name="ct" type="hidden" value="2097152"/><input name="s" type="hidden" value="on"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div><ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/CVE-2018/">CVE / 2018</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/技术分享/">技术分享</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/日志/">日志</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"><a href="/tags/机器学习框架/" style="font-size: 15px;">机器学习框架</a> <a href="/tags/随笔/" style="font-size: 15px;">随笔</a> <a href="/tags/固件/" style="font-size: 15px;">固件</a> <a href="/tags/CTF-web/" style="font-size: 15px;">CTF-web</a> <a href="/tags/技术分享/" style="font-size: 15px;">技术分享</a> <a href="/tags/win/" style="font-size: 15px;">win</a> <a href="/tags/漏洞利用/" style="font-size: 15px;">漏洞利用</a> <a href="/tags/GC/" style="font-size: 15px;">GC</a> <a href="/tags/code/" style="font-size: 15px;">code</a> <a href="/tags/Mircosoft/" style="font-size: 15px;">Mircosoft</a> <a href="/tags/fuzz/" style="font-size: 15px;">fuzz</a> <a href="/tags/漏洞分析/" style="font-size: 15px;">漏洞分析</a> <a href="/tags/技术分享-固件/" style="font-size: 15px;">技术分享/固件</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/11/25/glibc2-3-2-gcc3-4-5/">glibc2.3.2-gcc3.4.5</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/08/20/Crack-a-software/">Crack a software</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/08/20/RV340/">RV340</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/08/17/winafl-net/">winafl-net</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/08/17/fuzz修改/">fuzz修改</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/07/30/730/">730</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/04/10/CVE-2018-5146/">CVE-2018-5146</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/02/24/2021总结/">2021总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2021/02/25/fortigate-Vulnerability/">fortigate Vulnerability</a></li><li class="post-list-item"><a class="post-list-link" href="/2021/02/23/watchguard/">watchguard</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="https://yan-1-20.github.io/about/" title="Asprose" target="_blank">Asprose</a><ul></ul><a href="https://www.lucifaer.com/" title="Lucifaer" target="_blank">Lucifaer</a><ul></ul><a href="http://drac0nids.top/" title="Drac0nids" target="_blank">Drac0nids</a><ul></ul><a href="http://balis0ng.com/" title="balis0ng" target="_blank">balis0ng</a><ul></ul><a href="https://da7uran0ir.github.io/" title="Da7ura_n0ir" target="_blank">Da7ura_n0ir</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer"> Dad ， I will always love you.</div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=0.0.0" async></script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.0" async></script><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.css"><script type="text/javascript" color="255,0,0" opacity="0.7" zIndex="-1" count="100" src="//cdn.bootcss.com/canvas-nest.js/1.0.1/canvas-nest.min.js"></script><script type="text/javascript" src="/js/codeblock-resizer.js?v=0.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=0.0.0"></script></div></body></html>
